@@ -8,8 +8,11 @@ from models import PasswordReset
 from security.hash import HashService
 from services.email_service import EmailService
 from repository.user_repository import UserRepository
+from repository.forgot_password_repository import ForgotPasswordRepository
+
 
 class PasswordResetService:
+
     @staticmethod
     def forgot_password(email: str, db: Session):
         user = UserRepository.get_by_email(email, db)
@@ -22,9 +25,22 @@ class PasswordResetService:
 
         expire = now + timedelta(minutes=10)
 
-        password_reset = PasswordReset(user_id = user.id, code_hash = hashed_code, expires_at= expire, created_at = now)
+        db_password_reset = ForgotPasswordRepository.get_password_reset_by_user_id(user.id, db)
 
-        db.add(password_reset)
+        if db_password_reset:
+
+            db_password_reset.code_hash = hashed_code
+
+            db_password_reset.expires_at = expire
+
+            db_password_reset.created_at = now
+
+        else:
+
+            password_reset = PasswordReset(user_id = user.id, code_hash = hashed_code, expires_at= expire, created_at = now)
+
+            db.add(password_reset)
+
         try:
             db.commit()
         except:
@@ -36,3 +52,5 @@ class PasswordResetService:
         return {
             "Message": "Code Successfully Sent Check your Email"
         }
+
+

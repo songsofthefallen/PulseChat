@@ -24,3 +24,11 @@ class HashService:
             code.encode('utf-8'),
             bcrypt.gensalt()
         ).decode('utf-8')
+
+    @staticmethod
+    def verify_code(code, db_code):
+        if not bcrypt.checkpw(
+            code.encode('utf-8'),
+            db_code.encode('utf-8')
+        ):
+            raise HTTPException(status_code=401, detail="Incorrect Code")

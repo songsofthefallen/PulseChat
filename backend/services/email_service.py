@@ -2,9 +2,6 @@ import smtplib
 from email.message import EmailMessage
 from config import settings
 
-print(settings.SMTP_USERNAME)
-print(settings.SMTP_APP_PASSWORD)
-
 class EmailService:
 
     @staticmethod
