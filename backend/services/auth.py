@@ -32,6 +32,15 @@ class UserService:
             raise HTTPException(status_code=404, detail="User Not Found")
 
         return db_user
+    
+    def find_user_by_id(id: int, db: Session):
+        db_user = UserRepository.get_by_id(id, db)
+
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User Not Found")
+
+        return db_user   
+
 
     @staticmethod
     def register_user(user: RegisterUser, db: Session):

@@ -1,5 +1,7 @@
 import { PulseWaveform } from "@/components/ui/pulse-waveform";
 
+const currentYear = new Date().getFullYear();
+
 export function AuthShell({
   title,
   description,
@@ -32,7 +34,7 @@ export function AuthShell({
           </p>
         </div>
         <p className="relative text-xs text-muted-foreground">
-          © {new Date().getFullYear()} PulseChat
+          © {currentYear} PulseChat
         </p>
       </div>
 

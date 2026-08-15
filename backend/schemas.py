@@ -26,3 +26,11 @@ class RefreshTokenData(BaseModel):
 
 class ForgotPasswordData(BaseModel):
     email: EmailStr
+
+
+class VerifyResetCodeRequest(BaseModel):
+    email: EmailStr
+    code: str
+
+class ResetPasswordRequest(BaseModel):
+    password: str

@@ -36,8 +36,11 @@ export const authApi = {
   forgotPassword: (email: string) =>
     apiClient.post<void>("/auth/forgot-password", { email }),
 
-  resetPassword: (token: string, password: string) =>
-    apiClient.post<void>("/auth/reset-password", { token, password }),
+  verifyResetCode: (email: string, code: string) =>
+    apiClient.post<void>("/auth/verify-reset-code",{ email, code }),
+
+  resetPassword: (password: string) =>
+    apiClient.post<void>("/auth/reset-password", { password }),
 
   refresh: (refreshToken: string) =>
     apiClient.post<AuthResponse>("/auth/refresh", { refreshToken }),

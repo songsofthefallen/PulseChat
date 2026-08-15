@@ -8,6 +8,7 @@ import axios from "axios";
  */
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "/api/placeholder",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
