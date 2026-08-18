@@ -3,27 +3,51 @@ import { Hash, Pin, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, PresenceDot } from "@/components/ui/avatar";
-import { mockChannels, mockServers, mockMessages, mockUsers } from "@/constants/mock-data";
+import { mockChannels, mockMessages, mockUsers } from "@/constants/mock-data";
 import { cn, formatTimestamp, initials } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { workspaceApi } from "@/api/workspace";
 
 export function WorkspaceList() {
+  const {
+    data: workspaces,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["workspaces"],
+    queryFn: workspaceApi.getMyWorkspaces,
+  });
+
+  if (isLoading) {
+    return <p>Loading workspaces...</p>;
+  }
+
+  if (error) {
+    return <p>Unable to load workspaces.</p>;
+  }
+
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-      {mockServers.map((server) => (
-        <Link key={server.id} href={`/servers/${server.id}/channels/c3`}>
+      {workspaces?.map((workspace) => (
+        <Link
+          key={workspace.id}
+          href={`/workspaces/${workspace.id}`}
+        >
           <Card className="h-full transition-colors hover:border-accent/50">
             <CardContent className="flex flex-col gap-3 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex size-10 items-center justify-center rounded-xl bg-accent-soft text-sm font-semibold text-accent">
-                  {server.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                  {workspace.name
+                    .split(" ")
+                    .map((w) => w[0])
+                    .slice(0, 2)
+                    .join("")}
                 </div>
-                {server.unreadCount > 0 && (
-                  <Badge variant={server.hasMention ? "count" : "secondary"}>
-                    {server.unreadCount}
-                  </Badge>
-                )}
               </div>
-              <p className="truncate text-sm font-medium">{server.name}</p>
+
+              <p className="truncate text-sm font-medium">
+                {workspace.name}
+              </p>
             </CardContent>
           </Card>
         </Link>

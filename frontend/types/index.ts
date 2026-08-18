@@ -1,7 +1,7 @@
 export type PresenceStatus = "online" | "idle" | "dnd" | "offline";
 
 export interface User {
-  id: string;
+  id: number;
   name: string;
   handle: string;
   avatarUrl?: string;
@@ -28,15 +28,8 @@ export interface Server {
 export type ChannelType = "text" | "voice" | "dm";
 
 export interface Channel {
-  id: string;
-  serverId: string;
+  id: number;
   name: string;
-  type: ChannelType;
-  categoryId?: string;
-  topic?: string;
-  unreadCount: number;
-  mentionCount: number;
-  isFavorite?: boolean;
 }
 
 export interface ChannelCategory {

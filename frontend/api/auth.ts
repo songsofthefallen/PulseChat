@@ -45,5 +45,8 @@ export const authApi = {
   refresh: (refreshToken: string) =>
     apiClient.post<AuthResponse>("/auth/refresh", { refreshToken }),
 
-  me: () => apiClient.get<User>("/auth/me"),
+  me: async () => {
+    const response = await apiClient.get<User>("/auth/me");
+    return response.data;
+  },
 };

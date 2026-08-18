@@ -106,3 +106,26 @@ class JwtService:
 
         except JWTError:
             raise HTTPException(status_code=401, detail="Invalid token")
+
+    @staticmethod
+    def verify_access_token(token):
+        try:
+            payload = jwt.decode( #token is passed then 2 argument verify if same jwt_key using algo HS256
+                token,
+                JWT_KEY,
+                algorithms=[ALGO]
+            )
+
+            if payload.get("type") != "access":
+                raise HTTPException(status_code=401, detail="Invalid Token Type")
+
+            if payload.get("sub") is None:
+                raise HTTPException(status_code=401, detail="Invalid token")
+
+            return payload
+        
+        except ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Token expired")
+
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Invalid token")

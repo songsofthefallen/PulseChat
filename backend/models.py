@@ -1,19 +1,28 @@
 from sqlalchemy import String, Integer, DateTime, Column, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
-from database import Base, engine
+from database import Base
 
 class User(Base):
     __tablename__ = 'users'
+
     id = Column(Integer, primary_key=True)
     username = Column(String(100), nullable=False, unique=True)
     email = Column(String(200), nullable=False, unique=True)
     hashed_password = Column(String(255), nullable=False)
 
+    handle = Column(String(100), nullable=False, unique=True)
+    avatar_url = Column(String(500), nullable=True)
+    bio = Column(String(500), nullable=True)
+    status = Column(String(50), nullable=False, default="offline")
+    custom_status = Column(String(255), nullable=True)
+
     tokens = relationship('RefreshToken', back_populates='user', cascade='all, delete-orphan')
     password_resets = relationship('PasswordReset', back_populates='user')
+    workspace_members = relationship("WorkspaceMember" ,back_populates="user", cascade="all, delete-orphan")
 
 class RefreshToken(Base):
     __tablename__ = 'refresh_tokens'
+    
     id = Column(Integer, primary_key=True)
     token = Column(String(255), unique=True, nullable=False)
     jti = Column(String(64))
@@ -34,3 +43,32 @@ class PasswordReset(Base):
     created_at = Column(DateTime, nullable=False)
 
     user = relationship('User', back_populates='password_resets')
+
+class Workspace(Base):
+    __tablename__ = "workspaces"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+
+    members = relationship("WorkspaceMember",back_populates="workspace", cascade="all, delete-orphan")
+    channels = relationship("Channel", back_populates="workspace", cascade="all, delete-orphan")
+
+class WorkspaceMember(Base):
+    __tablename__ = "workspace_members"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True) #fk for pointing it to user and composite primary key to avoid duplication, non null and unique
+
+    workspace_id = Column(Integer,ForeignKey("workspaces.id", ondelete="CASCADE"), primary_key=True)
+
+    user = relationship("User", back_populates="workspace_members")
+
+    workspace = relationship("Workspace", back_populates="members")
+
+class Channel(Base):
+    __tablename__ = "channels"
+
+    id = Column(Integer, primary_key=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(100), nullable=False)
+
+    workspace = relationship("Workspace",back_populates="channels")

@@ -1,4 +1,5 @@
-from fastapi import HTTPException, Response
+from fastapi import HTTPException, Response, Request, Depends
+from database import get_db
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from repository.user_repository import UserRepository
@@ -97,7 +98,7 @@ class UserService:
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=True, #make this false for integration test to work
+            secure=False,  #testing
             samesite='lax',
             max_age =  900
         )
@@ -114,6 +115,26 @@ class UserService:
             "refresh_token": refresh.token,
             "token_type": "bearer"
         }
+
+    @staticmethod
+    def get_current_user(request: Request,  db: Session = Depends(get_db)):
+
+        token = request.cookies.get("access_token")
+
+        if token is None:
+
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
+        payload = JwtService.verify_access_token(token)
+
+        user_id = payload["sub"]
+
+        user = UserRepository.get_by_id(user_id, db)
+
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not Found")
+
+        return user
 
 
 

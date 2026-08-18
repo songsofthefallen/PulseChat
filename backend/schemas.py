@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 
 class RegisterUser(BaseModel):
@@ -7,8 +7,13 @@ class RegisterUser(BaseModel):
     password: str
 
 class UserResponse(BaseModel):
-    username: str
-    email: EmailStr
+    id: int
+    name: str
+    handle: str
+    avatar_url: str | None = None
+    bio: str | None = None
+    status: str
+    custom_status: str | None = None
 
 class RegisterResponse(BaseModel):
     message: str
@@ -34,3 +39,9 @@ class VerifyResetCodeRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     password: str
+
+class WorkspaceResponse(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)

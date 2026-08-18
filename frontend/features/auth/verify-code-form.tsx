@@ -93,7 +93,7 @@ export function VerifyCodeForm({ email }: { email: string }) {
 
   async function handleResend() {
     setCooldown(RESEND_COOLDOWN_SECONDS);
-    // TODO: replace with authApi.resendResetCode(email).
+    await authApi.forgotPassword(email)
     toast({ title: "Code resent", description: `Check ${email} for a new code.` });
   }
 
