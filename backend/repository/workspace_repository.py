@@ -14,5 +14,11 @@ class WorkspaceRepository:
         return db.query(Channel).join(WorkspaceMember, 
                 WorkspaceMember.workspace_id == Channel.workspace_id,).filter(
                     Channel.workspace_id == workspace_id,
-                    WorkspaceMember.user_id == user_id,
-                    WorkspaceMember.workspace_id == workspace_id).all()
+                    WorkspaceMember.user_id == user_id).all()
+
+    @staticmethod
+    def get_by_id(workspace_id: int, user_id: int, db: Session):
+        return db.query(Workspace).join(
+            WorkspaceMember, WorkspaceMember.workspace_id == Workspace.id).filter(
+                    Workspace.id == workspace_id,
+                    WorkspaceMember.user_id == user_id).first()

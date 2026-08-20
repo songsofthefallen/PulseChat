@@ -8,7 +8,9 @@ export interface Workspace {
 export const workspaceApi = {
   getMyWorkspaces: async (): Promise<Workspace[]> => {
     const response = await apiClient.get("/workspaces");
-
     return response.data;
   },
+
+  getOneWorkspace: (workspaceId: number) =>
+  apiClient.get<Workspace>(`/workspaces/${workspaceId}`),
 };

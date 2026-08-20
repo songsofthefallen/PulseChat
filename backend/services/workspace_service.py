@@ -17,3 +17,11 @@ class WorkspaceService:
         if not workspace:
             raise HTTPException(status_code=404, detail='Workspace Doesnt Exist')
         return workspace
+
+    @staticmethod
+    def get_one_workspace(workspace_id: int, current_user: User, db: Session):
+        workspace = WorkspaceRepository.get_by_id(workspace_id, current_user.id, db)
+        if workspace is None:
+            raise HTTPException(status_code=404, detail='Workspace Doesnt Exist')
+        return workspace
+
