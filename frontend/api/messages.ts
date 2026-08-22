@@ -1,14 +1,17 @@
 import { apiClient } from "./client";
-import type { Message, Paginated } from "@/types";
+import type { Message } from "@/types";
+
+
 
 export const messagesApi = {
-  list: (channelId: string, cursor?: string) =>
-    apiClient.get<Paginated<Message>>(`/channels/${channelId}/messages`, {
-      params: { cursor },
-    }),
+  listByChannel: (workspaceId: number, channelId: number) =>
+      apiClient.get<Message[]>(
+        `/workspaces/${workspaceId}/channels/${channelId}/messages`
+      ),
 
-  send: (channelId: string, payload: { content: string; replyToId?: string; attachmentIds?: string[] }) =>
-    apiClient.post<Message>(`/channels/${channelId}/messages`, payload),
+send: ( workspaceId: number, channelId: number, content: string,) => 
+  apiClient.post<Message>(`/workspaces/${workspaceId}/channels/${channelId}/messages`, { content },
+  ),
 
   edit: (messageId: string, content: string) =>
     apiClient.patch<Message>(`/messages/${messageId}`, { content }),

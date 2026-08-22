@@ -54,16 +54,11 @@ export interface Reaction {
 }
 
 export interface Message {
-  id: string;
-  channelId: string;
-  author: User;
+  id: number;
+  channel_id: number;
+  user_id: number;
   content: string;
-  createdAt: string;
-  editedAt?: string;
-  attachments: Attachment[];
-  reactions: Reaction[];
-  replyToId?: string;
-  pinned?: boolean;
+  created_at: string;
 }
 
 export interface NotificationItem {

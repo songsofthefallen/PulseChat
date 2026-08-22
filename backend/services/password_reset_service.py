@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Response, Request
 from sqlalchemy.orm import Session
-from services.auth import UserService
+from services.auth import AuthService
 import secrets
 from datetime import datetime, timedelta, UTC
 import secrets
@@ -75,7 +75,7 @@ class PasswordResetService:
 
     @staticmethod
     def verify_reset_code(response, email: str, code: str, db: Session):
-        user = UserService.find_user_by_email(email, db)
+        user = AuthService.find_user_by_email(email, db)
 
         password_reset_row = ForgotPasswordRepository.get_password_reset_by_user_id(user.id, db)
 
@@ -105,7 +105,7 @@ class PasswordResetService:
 
             user_id = int(payload["sub"])
 
-            user = UserService.find_user_by_id(user_id, db)
+            user = AuthService.find_user_by_id(user_id, db)
 
             new_hashed_password = HashService.hash_code(new_password)
 

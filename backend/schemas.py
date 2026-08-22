@@ -45,3 +45,15 @@ class WorkspaceResponse(BaseModel):
     name: str
 
     model_config = ConfigDict(from_attributes=True)
+
+class MessageResponse(BaseModel):
+    id: int
+    channel_id: int
+    user_id: int
+    content: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class SendMessageRequest(BaseModel):
+    content: str

@@ -9,7 +9,7 @@ from security.hash import HashService
 from security.jwt import JwtService
 
 
-class UserService:
+class AuthService:
 
     @staticmethod
     def username_already_exist(username: str, db: Session):
@@ -46,9 +46,9 @@ class UserService:
     @staticmethod
     def register_user(user: RegisterUser, db: Session):
 
-        UserService.username_already_exist(user.username, db)
+        AuthService.username_already_exist(user.username, db)
 
-        UserService.email_already_exist(user.email, db)
+        AuthService.email_already_exist(user.email, db)
 
         hashed_password = HashService.hash_password(user.password)
 
@@ -75,7 +75,7 @@ class UserService:
     @staticmethod
     def login_user(response: Response, user: LoginUser, db: Session):
 
-        db_user = UserService.find_user_by_email(user.email, db)
+        db_user = AuthService.find_user_by_email(user.email, db)
 
         HashService.check_password(user.password, db_user.hashed_password)
 

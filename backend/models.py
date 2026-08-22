@@ -1,6 +1,7 @@
 from sqlalchemy import String, Integer, DateTime, Column, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
+from datetime import datetime, UTC
 
 class User(Base):
     __tablename__ = 'users'
@@ -19,7 +20,8 @@ class User(Base):
     tokens = relationship('RefreshToken', back_populates='user', cascade='all, delete-orphan')
     password_resets = relationship('PasswordReset', back_populates='user')
     workspace_members = relationship("WorkspaceMember" ,back_populates="user", cascade="all, delete-orphan")
-
+    messages = relationship("Message", back_populates="user")
+ 
 class RefreshToken(Base):
     __tablename__ = 'refresh_tokens'
     
@@ -61,7 +63,6 @@ class WorkspaceMember(Base):
     workspace_id = Column(Integer,ForeignKey("workspaces.id", ondelete="CASCADE"), primary_key=True)
 
     user = relationship("User", back_populates="workspace_members")
-
     workspace = relationship("Workspace", back_populates="members")
 
 class Channel(Base):
@@ -72,3 +73,16 @@ class Channel(Base):
     name = Column(String(100), nullable=False)
 
     workspace = relationship("Workspace",back_populates="channels")
+    messages = relationship("Message",back_populates="channel",cascade="all, delete-orphan")
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True)
+    channel_id = Column(Integer,ForeignKey("channels.id", ondelete="CASCADE"),nullable=False)
+    user_id = Column(Integer,ForeignKey("users.id", ondelete="CASCADE"),nullable=False)
+    content = Column(String(2000), nullable=False)
+    created_at = Column(DateTime,nullable=False, default=lambda: datetime.now(UTC))
+
+    channel = relationship("Channel", back_populates="messages")
+    user = relationship("User", back_populates="messages")

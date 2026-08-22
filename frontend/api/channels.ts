@@ -2,8 +2,13 @@ import { apiClient } from "./client";
 import type { Channel, ChannelCategory } from "@/types";
 
 export const channelsApi = {
-listByWorkspace: (workspaceId: number) =>
-  apiClient.get<Channel[]>(`/workspaces/${workspaceId}/channels`),
+  listByWorkspace: (workspaceId: number) =>
+    apiClient.get<Channel[]>(`/workspaces/${workspaceId}/channels`),
+
+  getOneChannel: (workspaceId: number, channelId: number) =>
+    apiClient.get<Channel>(`/workspaces/${workspaceId}/channels/${channelId}`),
+
+
 
   categories: (serverId: string) =>
     apiClient.get<ChannelCategory[]>(`/servers/${serverId}/categories`),
