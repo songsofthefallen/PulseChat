@@ -1,5 +1,12 @@
 import { apiClient } from "./client";
 import type { User } from "@/types";
+import { setAccessToken } from "./tokenStore";
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
 
 export interface LoginPayload {
   email: string;
@@ -19,14 +26,22 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
-/**
- * Placeholder auth module. The real backend is assumed to provide JWT
- * access/refresh tokens, RBAC claims, and rate limiting — none of that
- * is implemented here, only the request shapes the UI depends on.
- */
+
+
 export const authApi = {
-  login: (payload: LoginPayload) =>
-    apiClient.post<AuthResponse>("/auth/login", payload),
+ async login(credentials: LoginRequest) {
+    const response = await apiClient.post( "/auth/login", credentials);
+
+    console.log("LOGIN RESPONSE:", response.data);
+
+    setAccessToken(response.data.access_token);
+
+      console.log(
+      "STORED ACCESS TOKEN:",
+      response.data.access_token
+    );
+    return response.data;
+  },
 
   register: (payload: RegisterPayload) =>
     apiClient.post<AuthResponse>("/auth/register", payload),
@@ -49,4 +64,7 @@ export const authApi = {
     const response = await apiClient.get<User>("/auth/me");
     return response.data;
   },
+  
 };
+
+

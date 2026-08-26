@@ -26,7 +26,6 @@ class LoginUser(BaseModel):
 class RefreshTokenData(BaseModel):
     hash_token: str
     token: str
-    jti: str
     expires_at: datetime
 
 class ForgotPasswordData(BaseModel):

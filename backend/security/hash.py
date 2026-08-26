@@ -31,14 +31,11 @@ class HashService:
 
         expire = datetime.now(UTC) + expires_delta
 
-        jti = secrets.token_hex(16)
-
         hash_token = hashlib.sha256(refresh_token.encode()).hexdigest()
 
         return RefreshTokenData(
             hash_token=hash_token,
             token=refresh_token,
-            jti=jti,
             expires_at=expire,
         )
 

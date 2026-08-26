@@ -9,6 +9,7 @@ from schemas import RegisterUser, LoginUser
 from security.hash import HashService
 from security.jwt import JwtService
 from datetime import datetime, UTC
+from fastapi.security import OAuth2PasswordBearer
 
 
 class AuthService:
@@ -85,7 +86,14 @@ class AuthService:
 
         refresh = HashService.create_refresh_token()
 
-        refresh_token = RefreshToken(token = refresh.hash_token, jti = refresh.jti, user_id = db_user.id, expires_at = refresh.expires_at)
+        refresh_token = RefreshToken(token = refresh.hash_token, user_id = db_user.id, expires_at = refresh.expires_at)
+
+        db.add(refresh_token)
+        try:
+            db.commit()
+        except:
+            db.rollback()
+            raise
 
         response.set_cookie(
             key="refresh_token",
@@ -96,36 +104,19 @@ class AuthService:
             max_age =  60 * 60 * 24 * 30
         )
 
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=False,  #testing
-            samesite='lax',
-            max_age =  900
-        )
-
-        db.add(refresh_token)
-        try:
-            db.commit()
-        except:
-            db.rollback()
-            raise
-
         return {
             "access_token": access_token,
-            "refresh_token": refresh.token,
-            "token_type": "bearer"
+            "token_type": "Bearer"
         }
 
+    
+    oauth2_scheme = OAuth2PasswordBearer(
+        tokenUrl="/auth/login"
+    )
+
     @staticmethod
-    def get_current_user(request: Request,  db: Session = Depends(get_db)):
-
-        token = request.cookies.get("access_token")
-
-        if token is None:
-            raise HTTPException(status_code=401, detail="Not authenticated")
-
+    def get_current_user(token: str = Depends(oauth2_scheme) ,db: Session = Depends(get_db)
+    ):
         payload = JwtService.verify_access_token(token)
 
         user_id = payload["sub"]
@@ -133,12 +124,15 @@ class AuthService:
         user = UserRepository.get_by_id(user_id, db)
 
         if user is None:
-            raise HTTPException(status_code=404, detail="User not Found")
+            raise HTTPException(
+                status_code=404,
+                detail="User not Found"
+            )
 
         return user
 
     @staticmethod
-    def refresh_access_token(request: Request, db: Session):
+    def refresh_access_token(request: Request, response: Response, db: Session):
 
         token = request.cookies.get("refresh_token")
 
@@ -152,7 +146,7 @@ class AuthService:
         if db_refresh_token is None:
             raise HTTPException(status_code=401, detail="Not authenticated")
     
-        if db_refresh_token.expires_at <= datetime.now(UTC):
+        if db_refresh_token.expires_at.replace(tzinfo=UTC) <= datetime.now(UTC):
             raise HTTPException(401, "Refresh token expired")
 
         if db_refresh_token.revoked:
@@ -162,19 +156,24 @@ class AuthService:
 
         new_access_token = JwtService.create_access_token(user)
 
-        new_refresh_token = JwtService.create_refresh_token(user)
+        new_refresh_token = HashService.create_refresh_token()
 
         db_refresh_token.token = new_refresh_token.hash_token
-
-        db_refresh_token.jti = new_refresh_token.jti
-
-
 
         try:
             db.commit()
         except:
             db.rollback()
             raise
+
+        response.set_cookie(
+            key="refresh_token",
+            value=new_refresh_token.token,
+            httponly=True,
+            secure=True,
+            samesite='lax',
+            max_age =  60 * 60 * 24 * 30
+        )
 
         return {
         "access_token": new_access_token,

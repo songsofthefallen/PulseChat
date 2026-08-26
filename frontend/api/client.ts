@@ -1,13 +1,21 @@
-import axios from "axios";
+import axios, {
+  AxiosError,
+  InternalAxiosRequestConfig,
+} from "axios";
 
-/**
- * Central Axios instance. Points at a placeholder base URL — swap
- * NEXT_PUBLIC_API_URL in .env.local once the real backend is available.
- * No auth/session logic lives here beyond attaching the bearer token;
- * the actual auth flow (issuing/refreshing JWTs) is a backend concern.
- */
+import {
+  getAccessToken,
+  setAccessToken,
+  clearAccessToken,
+} from "./tokenStore";
+
+console.log("🔥 API CLIENT LOADED");
+
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "/api/placeholder";
+
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "/api/placeholder",
+  baseURL: API_URL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -15,23 +23,84 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  const token = typeof window !== "undefined"
-    ? window.localStorage.getItem("pulsechat-access-token")
-    : null;
+  const token = getAccessToken();
+
+  console.log("🔥 Req interceptor");
+
+  
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  else {
+    console.log("empty token")
+  }
+
   return config;
 });
 
-// Placeholder for refresh-token handling. Wire this up to the real
-// auth endpoints — this only documents the intended shape.
+async function refreshAccessToken(): Promise<string> {
+  const response = await axios.post(
+    `${API_URL}/auth/refresh`,
+    {},
+    {
+      withCredentials: true,
+    }
+  );
+
+  const newAccessToken = response.data.access_token;
+
+  setAccessToken(newAccessToken);
+
+  return newAccessToken;
+}
+
+let refreshPromise: Promise<string> | null = null;
+
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      // TODO: attempt refresh via POST /auth/refresh, retry original request.
+
+  async (error: AxiosError) => {
+    const originalRequest =
+      error.config as InternalAxiosRequestConfig & {
+        _retry?: boolean;
+      };
+
+    if (error.response?.status !== 401) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    if (originalRequest._retry) {
+      clearAccessToken();
+
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken();
+      }
+
+      const newAccessToken = await refreshPromise;
+
+      originalRequest.headers.Authorization =
+        `Bearer ${newAccessToken}`;
+
+      return apiClient(originalRequest);
+
+    } catch (refreshError) {
+      clearAccessToken();
+
+      return Promise.reject(refreshError);
+
+    } finally {
+      refreshPromise = null;
+    }
   }
 );
