@@ -46,12 +46,19 @@ class WorkspaceResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class MessageUserResponse(BaseModel):
+    id: int
+    username: str
+    avatar_url: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
 class MessageResponse(BaseModel):
     id: int
     channel_id: int
-    user_id: int
     content: str
     created_at: datetime
+    user: MessageUserResponse
 
     model_config = ConfigDict(from_attributes=True)
 

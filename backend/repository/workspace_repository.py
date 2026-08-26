@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from models import Workspace, WorkspaceMember, Channel, Message
 
 class WorkspaceRepository:
@@ -39,9 +39,11 @@ class WorkspaceRepository:
         return db.query(Message).join(
             Channel, Channel.id == Message.channel_id).join(
                 WorkspaceMember, WorkspaceMember.workspace_id == Channel.workspace_id
-                    ).filter(
-                        WorkspaceMember.user_id == user_id,
-                        Channel.workspace_id == workspace_id,
-                        Message.channel_id == channel_id
-                    ) .order_by(Message.created_at.asc()).all()
+                    ).options(
+                        joinedload(Message.user)
+                        ).filter(
+                            WorkspaceMember.user_id == user_id,
+                            Channel.workspace_id == workspace_id,
+                            Message.channel_id == channel_id
+                        ) .order_by(Message.created_at.asc()).all()
 

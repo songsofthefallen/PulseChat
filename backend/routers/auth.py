@@ -46,3 +46,8 @@ def get_me(current_user: User = Depends(AuthService.get_current_user)):
         status=current_user.status,
         custom_status=current_user.custom_status,
     )
+
+@router.post("/refresh")
+def refresh_access_token(request: Request, db: Session = Depends(get_db)):
+
+    return AuthService.refresh_access_token(request, db)

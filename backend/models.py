@@ -40,6 +40,7 @@ class PasswordReset(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(ForeignKey("users.id"), nullable=False)
     code_hash = Column(String(255), nullable=False)
+    reset_token_hash = Column(String(64), nullable=True)
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, nullable=False)

@@ -128,14 +128,14 @@ export default function ChannelPage() {
                 >
                   {/* Avatar */}
                   <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent">
-                    U
+                    {message.user.username.charAt(0).toUpperCase()}
                   </div>
 
                   {/* Message */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-2">
                       <span className="text-sm font-semibold">
-                        User {message.user_id}
+                        {message.user.username}
                       </span>
 
                       <span className="text-[11px] text-muted-foreground">

@@ -53,12 +53,18 @@ export interface Reaction {
   reactedByMe: boolean;
 }
 
+export interface MessageUser {
+  id: number;
+  username: string;
+  avatar_url: string | null;
+}
+
 export interface Message {
   id: number;
   channel_id: number;
-  user_id: number;
   content: string;
   created_at: string;
+  user: MessageUser;
 }
 
 export interface NotificationItem {

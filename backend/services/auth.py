@@ -3,10 +3,12 @@ from database import get_db
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from repository.user_repository import UserRepository
+from repository.auth_repository import AuthRepository
 from models import User, RefreshToken
 from schemas import RegisterUser, LoginUser
 from security.hash import HashService
 from security.jwt import JwtService
+from datetime import datetime, UTC
 
 
 class AuthService:
@@ -81,7 +83,7 @@ class AuthService:
 
         access_token = JwtService.create_access_token(db_user)
 
-        refresh = JwtService.create_refresh_token(db_user)
+        refresh = HashService.create_refresh_token()
 
         refresh_token = RefreshToken(token = refresh.hash_token, jti = refresh.jti, user_id = db_user.id, expires_at = refresh.expires_at)
 
@@ -122,7 +124,6 @@ class AuthService:
         token = request.cookies.get("access_token")
 
         if token is None:
-
             raise HTTPException(status_code=401, detail="Not authenticated")
 
         payload = JwtService.verify_access_token(token)
@@ -136,6 +137,50 @@ class AuthService:
 
         return user
 
+    @staticmethod
+    def refresh_access_token(request: Request, db: Session):
 
+        token = request.cookies.get("refresh_token")
+
+        if token is None:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
+        hash_token = HashService.hash_token(token)
+
+        db_refresh_token = AuthRepository.get_token_by_hash_token(hash_token, db)
+
+        if db_refresh_token is None:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+    
+        if db_refresh_token.expires_at <= datetime.now(UTC):
+            raise HTTPException(401, "Refresh token expired")
+
+        if db_refresh_token.revoked:
+            raise HTTPException(401, "Refresh token revoked")
+
+        user = AuthService.find_user_by_id(db_refresh_token.user_id, db)
+
+        new_access_token = JwtService.create_access_token(user)
+
+        new_refresh_token = JwtService.create_refresh_token(user)
+
+        db_refresh_token.token = new_refresh_token.hash_token
+
+        db_refresh_token.jti = new_refresh_token.jti
+
+
+
+        try:
+            db.commit()
+        except:
+            db.rollback()
+            raise
+
+        return {
+        "access_token": new_access_token,
+        "token_type": "bearer"
+        }
+
+        
 
 

@@ -4,10 +4,8 @@ from services.auth import AuthService
 import secrets
 from datetime import datetime, timedelta, UTC
 import secrets
-from datetime import datetime, timedelta, UTC
 from models import PasswordReset
 from security.hash import HashService
-from security.jwt import JwtService
 from services.email_service import EmailService
 from repository.user_repository import UserRepository
 from repository.forgot_password_repository import ForgotPasswordRepository
@@ -37,6 +35,10 @@ class PasswordResetService:
 
             db_password_reset.created_at = now
 
+            db_password_reset.used = False
+
+            db_password_reset.reset_token_hash = None
+
         else:
 
             password_reset = PasswordReset(user_id = user.id, code_hash = hashed_code, expires_at= expire, created_at = now)
@@ -56,7 +58,7 @@ class PasswordResetService:
         }
 
     @staticmethod
-    def verify_code_not_expired(row):
+    def verify_not_expired(row):
         now = datetime.now(UTC)
         expire = PasswordResetService.ensure_utc(row.expires_at)
 
@@ -66,7 +68,8 @@ class PasswordResetService:
                 status_code=400,
                 detail="Reset code has expired"
     )
-
+        
+    @staticmethod
     def ensure_utc(value: datetime) -> datetime:
         if value.tzinfo is None:
             return value.replace(tzinfo=UTC)
@@ -81,9 +84,18 @@ class PasswordResetService:
 
         HashService.verify_code(code, password_reset_row.code_hash)
 
-        PasswordResetService.verify_code_not_expired(password_reset_row)
+        PasswordResetService.verify_not_expired(password_reset_row)
 
-        reset_token = JwtService.create_reset_password_token(user)
+        reset_token, hash_token = HashService.create_reset_password_token()
+
+        password_reset_row.reset_token_hash = hash_token
+
+        try:
+            db.commit()
+        except:
+            db.rollback()
+            raise
+
 
         response.set_cookie(
             key="password_reset_token",
@@ -97,19 +109,28 @@ class PasswordResetService:
         return {"message": "Code verified"}
 
     @staticmethod
-    def reset_password(response: Response, request: Request, new_password: str, db: str):
+    def reset_password(response: Response, request: Request, new_password: str, db: Session):
 
             reset_token = request.cookies.get("password_reset_token")
-            
-            payload = JwtService.verify_reset_password_token(reset_token)
 
-            user_id = int(payload["sub"])
+            if reset_token is None:
+                raise HTTPException(status_code=401, detail="Invalid reset session")
 
-            user = AuthService.find_user_by_id(user_id, db)
+            hash_token = HashService.hash_token(reset_token)
 
-            new_hashed_password = HashService.hash_code(new_password)
+            password_reset = ForgotPasswordRepository.get_password_reset_by_token(hash_token, db)
 
-            user.hashed_password = new_hashed_password
+            if password_reset is None:
+                raise HTTPException(status_code=401, detail="Invalid reset token")
+
+            PasswordResetService.verify_not_expired(password_reset)
+
+            user = AuthService.find_user_by_id(password_reset.user_id, db)
+
+            user.hashed_password = HashService.hash_password(new_password)
+
+            password_reset.used = True
+
             try:
                 db.commit()
             except:
