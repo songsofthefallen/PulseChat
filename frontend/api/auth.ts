@@ -32,14 +32,9 @@ export const authApi = {
  async login(credentials: LoginRequest) {
     const response = await apiClient.post( "/auth/login", credentials);
 
-    console.log("LOGIN RESPONSE:", response.data);
 
     setAccessToken(response.data.access_token);
 
-      console.log(
-      "STORED ACCESS TOKEN:",
-      response.data.access_token
-    );
     return response.data;
   },
 
@@ -61,7 +56,7 @@ export const authApi = {
     apiClient.post<AuthResponse>("/auth/refresh", { refreshToken }),
 
   me: async () => {
-    const response = await apiClient.get<User>("/auth/me");
+    const response = await apiClient.get<User>("/users/me");
     return response.data;
   },
   

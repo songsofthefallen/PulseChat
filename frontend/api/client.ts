@@ -9,8 +9,6 @@ import {
   clearAccessToken,
 } from "./tokenStore";
 
-console.log("🔥 API CLIENT LOADED");
-
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "/api/placeholder";
 
@@ -25,15 +23,8 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   const token = getAccessToken();
 
-  console.log("🔥 Req interceptor");
-
-  
-
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-  }
-  else {
-    console.log("empty token")
   }
 
   return config;

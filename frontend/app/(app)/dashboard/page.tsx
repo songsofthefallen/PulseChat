@@ -30,7 +30,7 @@ export default function DashboardPage() {
     return <div>Unable to load user.</div>;
   }
 
-  const firstName = user.name.split(" ")[0];
+  const firstName = user.username.split(" ")[0];
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">

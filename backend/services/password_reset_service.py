@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Response, Request
 from sqlalchemy.orm import Session
-from services.auth import AuthService
+from services.auth_service import AuthService
 import secrets
 from datetime import datetime, timedelta, UTC
 import secrets
@@ -8,7 +8,7 @@ from models import PasswordReset
 from security.hash import HashService
 from services.email_service import EmailService
 from repository.user_repository import UserRepository
-from repository.forgot_password_repository import ForgotPasswordRepository
+from repository.auth_repository import AuthRepository
 
 
 class PasswordResetService:
@@ -25,7 +25,7 @@ class PasswordResetService:
 
         expire = now + timedelta(minutes=10)
 
-        db_password_reset = ForgotPasswordRepository.get_password_reset_by_user_id(user.id, db)
+        db_password_reset = AuthRepository.get_password_reset_by_user_id(user.id, db)
 
         if db_password_reset:
 
@@ -80,7 +80,7 @@ class PasswordResetService:
     def verify_reset_code(response, email: str, code: str, db: Session):
         user = AuthService.find_user_by_email(email, db)
 
-        password_reset_row = ForgotPasswordRepository.get_password_reset_by_user_id(user.id, db)
+        password_reset_row = AuthRepository.get_password_reset_by_user_id(user.id, db)
 
         HashService.verify_code(code, password_reset_row.code_hash)
 
@@ -118,7 +118,7 @@ class PasswordResetService:
 
             hash_token = HashService.hash_token(reset_token)
 
-            password_reset = ForgotPasswordRepository.get_password_reset_by_token(hash_token, db)
+            password_reset = AuthRepository.get_password_reset_by_token(hash_token, db)
 
             if password_reset is None:
                 raise HTTPException(status_code=401, detail="Invalid reset token")

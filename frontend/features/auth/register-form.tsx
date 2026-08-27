@@ -34,7 +34,6 @@ export function RegisterForm() {
             description: `Welcome to PulseChat, ${values.username}.`,
           });
 
-          console.log(response.data);
 
   }  catch (error) {
       if (axios.isAxiosError(error)) {

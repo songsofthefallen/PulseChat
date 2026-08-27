@@ -2,7 +2,7 @@ export type PresenceStatus = "online" | "idle" | "dnd" | "offline";
 
 export interface User {
   id: number;
-  name: string;
+  username: string;
   handle: string;
   avatarUrl?: string;
   bio?: string;

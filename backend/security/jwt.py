@@ -35,7 +35,7 @@ class JwtService:
     @staticmethod
     def verify_access_token(token):
         try:
-            payload = jwt.decode( #token is passed then 2 argument verify if same jwt_key using algo HS256
+            payload = jwt.decode(
                 token,
                 JWT_KEY,
                 algorithms=[ALGO]

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Response, Request
 from sqlalchemy.orm import Session
 from schemas import RegisterUser, RegisterResponse, LoginUser, ForgotPasswordData, VerifyResetCodeRequest, ResetPasswordRequest, UserResponse
-from services.auth import AuthService
+from services.auth_service import AuthService
 from services.password_reset_service import PasswordResetService
 from database import get_db
 from models import User
@@ -35,17 +35,6 @@ def reset_password(response: Response, request: Request, data: ResetPasswordRequ
 
     return PasswordResetService.reset_password(response, request, data.password, db)
 
-@router.get('/auth/me', response_model=UserResponse)
-def get_me(current_user: User = Depends(AuthService.get_current_user)):
-    return UserResponse(
-        id=current_user.id,
-        name=current_user.username,
-        handle=current_user.handle,
-        avatar_url=current_user.avatar_url,
-        bio=current_user.bio,
-        status=current_user.status,
-        custom_status=current_user.custom_status,
-    )
 
 @router.post('/auth/refresh')
 def refresh_access_token(request: Request, response: Response, db: Session = Depends(get_db)):

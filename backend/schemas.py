@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from datetime import datetime
 
 class RegisterUser(BaseModel):
@@ -8,12 +8,20 @@ class RegisterUser(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
-    name: str
+    username: str
     handle: str
     avatar_url: str | None = None
     bio: str | None = None
     status: str
     custom_status: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class UpdateProfileRequest(BaseModel):
+    username: str | None = Field(default=None, min_length=3, max_length=100)
+    handle: str | None = Field(default=None, min_length=3, max_length=100)
+    avatar_url: str | None = Field(default=None, max_length=500)
+    bio: str | None = Field(default=None, max_length=500)
 
 class RegisterResponse(BaseModel):
     message: str

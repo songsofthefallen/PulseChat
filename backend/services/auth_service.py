@@ -1,4 +1,5 @@
-from fastapi import HTTPException, Response, Request, Depends
+from fastapi import HTTPException, Response, Request, Depends, Header
+from fastapi.security import HTTPBearer
 from database import get_db
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -9,8 +10,8 @@ from schemas import RegisterUser, LoginUser
 from security.hash import HashService
 from security.jwt import JwtService
 from datetime import datetime, UTC
-from fastapi.security import OAuth2PasswordBearer
 
+bearer_scheme = HTTPBearer()
 
 class AuthService:
 
@@ -61,7 +62,6 @@ class AuthService:
         try:
             db.commit()
             db.refresh(save_user)
-
         except IntegrityError:
             db.rollback()
 
@@ -109,14 +109,13 @@ class AuthService:
             "token_type": "Bearer"
         }
 
-    
-    oauth2_scheme = OAuth2PasswordBearer(
-        tokenUrl="/auth/login"
-    )
+
 
     @staticmethod
-    def get_current_user(token: str = Depends(oauth2_scheme) ,db: Session = Depends(get_db)
-    ):
+    def get_current_user(credentials = Depends(bearer_scheme), db: Session = Depends(get_db)):
+
+        token = credentials.credentials
+        
         payload = JwtService.verify_access_token(token)
 
         user_id = payload["sub"]

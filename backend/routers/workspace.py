@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Response, Request
 from sqlalchemy.orm import Session
 from models import User
-from services.auth import AuthService
+from services.auth_service import AuthService
 from services.workspace_service import WorkspaceService, MessageService
 from database import get_db
 from schemas import WorkspaceResponse, MessageResponse, SendMessageRequest
