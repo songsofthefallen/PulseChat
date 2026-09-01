@@ -2,10 +2,17 @@ from fastapi import HTTPException
 from models import User
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from schemas import UpdateProfileRequest
+from schemas import UpdateProfileRequest, UserResponse
 from repository.user_repository import UserRepository
 
 class UserService:
+    @staticmethod
+    def all_users(db: Session):
+    
+        users = UserRepository.get_all_users(db)
+
+        return [UserResponse.model_validate(user) for user in users]
+
     @staticmethod
     def update_profile(data: UpdateProfileRequest, current_user: User, db: Session):
 

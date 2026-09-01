@@ -8,7 +8,6 @@ export interface User {
   bio?: string;
   status: PresenceStatus;
   customStatus?: string;
-  roleIds?: string[];
 }
 
 export interface Role {

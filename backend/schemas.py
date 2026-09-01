@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from typing import Literal
 from datetime import datetime
 
 class RegisterUser(BaseModel):
@@ -71,3 +72,7 @@ class MessageResponse(BaseModel):
 
 class SendMessageRequest(BaseModel):
     content: str
+
+class UserPresenceResponse(BaseModel):
+    user_id: int
+    status: Literal["Online", "Offline"]

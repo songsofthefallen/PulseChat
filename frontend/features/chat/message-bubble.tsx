@@ -43,7 +43,7 @@ function renderContent(content: string) {
 }
 
 export function MessageBubble({
-  message,
+  message ,
   grouped,
   isOwn,
 }: {

@@ -9,25 +9,47 @@ export function cn(...inputs: ClassValue[]) {
 export function formatTimestamp(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
-  const isToday = d.toDateString() === now.toDateString();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday = d.toDateString() === yesterday.toDateString();
 
-  const time = d.toLocaleTimeString(undefined, {
+  const timeZone = "Asia/Manila";
+  const locale = "en-PH";
+
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    timeZone,
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+  const timeFormatter = new Intl.DateTimeFormat(locale, {
+    timeZone,
     hour: "numeric",
     minute: "2-digit",
   });
 
-  if (isToday) return `Today at ${time}`;
-  if (isYesterday) return `Yesterday at ${time}`;
-  return `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} at ${time}`;
+  const dateString = dateFormatter.format(d);
+  const todayString = dateFormatter.format(now);
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const yesterdayString = dateFormatter.format(yesterday);
+
+  const time = timeFormatter.format(d);
+
+  if (dateString === todayString) {
+    return `Today at ${time}`;
+  }
+
+  if (dateString === yesterdayString) {
+    return `Yesterday at ${time}`;
+  }
+  return `${dateString} at ${time}`;
 }
 
-export function initials(name: string): string {
-  return name
+export function initials(username: string): string {
+  return username
     .split(" ")
-    .filter(Boolean)
+    .filter(Boolean) 
     .slice(0, 2)
     .map((n) => n[0]?.toUpperCase())
     .join("");

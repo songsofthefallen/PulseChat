@@ -1,6 +1,10 @@
+"use client";
+
 import { ServerRail } from "@/components/layout/server-rail";
+import { useHeartbeat } from "@/hooks/useHeartbeat"
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  useHeartbeat()
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background">
       <ServerRail />

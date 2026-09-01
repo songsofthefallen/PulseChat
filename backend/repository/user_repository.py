@@ -24,4 +24,10 @@ class UserRepository:
     def handle_exist(data: UpdateProfileRequest,current_user: User, db: Session):
         return db.query(User).filter(User.handle == data.handle, User.id != current_user.id).first()
 
+    @staticmethod
+    def get_all_users(db: Session):
+        return db.query(User).all()
+
+
+
 
