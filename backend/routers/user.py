@@ -49,3 +49,14 @@ def heartbeat(current_user: User = Depends(AuthService.get_current_user), redis_
 def presence(user_ids: list[int] = Query(), redis_client: redis.Redis = Depends(Dependencies.get_redis)):
 
     return PresenceService.get_users_presence(user_ids, redis_client)
+
+@router.get('/users/{user_id}/presence', response_model=UserPresenceResponse)
+def presence(user_id: int, redis_client: redis.Redis = Depends(Dependencies.get_redis)):
+
+    status = PresenceService.is_online(user_id, redis_client)
+
+    return UserPresenceResponse(
+        user_id=user_id,
+        status="Online" if status else "Offline"
+    )
+

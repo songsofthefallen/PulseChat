@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     SMTP_APP_PASSWORD: str
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int =587
+    PRESENCE_TTL: int = 60
 
     model_config = SettingsConfigDict(
         env_file=".env",
