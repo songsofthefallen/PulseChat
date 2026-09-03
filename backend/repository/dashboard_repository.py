@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
-from models import Workspace, WorkspaceMember, Channel, Message
+from models import Workspace, WorkspaceMember, Channel, Message, PinnedChannel
 
-class WorkspaceRepository:
+class DashboardRepository:
 
     @staticmethod
     def get_list_of_workspace(user_id: int, db: Session):
@@ -35,6 +35,16 @@ class WorkspaceRepository:
             ).first()
 
     @staticmethod
+    def get_channel_for_user(channel_id: int, user_id: int, db: Session):
+        return db.query(Channel).join(
+            WorkspaceMember,
+            WorkspaceMember.workspace_id == Channel.workspace_id
+        ).filter(
+            Channel.id == channel_id,
+            WorkspaceMember.user_id == user_id
+        ).first()
+
+    @staticmethod
     def get_list_of_messages(workspace_id: int, channel_id: int, user_id:int, db: Session):
         return db.query(Message).join(
             Channel, Channel.id == Message.channel_id).join(
@@ -45,5 +55,38 @@ class WorkspaceRepository:
                             WorkspaceMember.user_id == user_id,
                             Channel.workspace_id == workspace_id,
                             Message.channel_id == channel_id
-                        ) .order_by(Message.created_at.asc()).all()
+                        ).order_by(Message.created_at.asc()).all()
 
+
+    @staticmethod
+    def get_recent_conversations(user_id: int, db: Session):
+        return (db.query(Message).join(
+            Channel, Channel.id == Message.channel_id).join(
+                WorkspaceMember,
+                WorkspaceMember.workspace_id == Channel.workspace_id
+                ).options(
+                    joinedload(Message.user),
+                    joinedload(Message.channel),
+                    ).filter(
+                        WorkspaceMember.user_id == user_id).order_by(
+                            Message.created_at.desc()).limit(5).all())
+
+    @staticmethod
+    def get_pinned_channels(user_id: int, db: Session):
+        return db.query(Channel).join(
+            PinnedChannel,
+            PinnedChannel.channel_id == Channel.id
+            ).join(
+                WorkspaceMember,
+                WorkspaceMember.workspace_id == Channel.workspace_id
+                ).filter(
+                    PinnedChannel.user_id == user_id,
+                    WorkspaceMember.user_id == user_id).all()
+        
+
+    @staticmethod
+    def get_pin_channel(user_id: int, channel_id: int, db: Session):
+        return db.query(PinnedChannel).filter(
+            PinnedChannel.user_id == user_id,
+            PinnedChannel.channel_id == channel_id
+                ).first()

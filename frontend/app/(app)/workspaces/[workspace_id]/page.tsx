@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { channelsApi } from "@/api/channels";
-import { workspaceApi} from "@/api/workspace";
+import { dashboardApi } from "@/api/dashboard";
 import Link from "next/link";
 
 export default function WorkspacePage() {
@@ -26,7 +26,7 @@ export default function WorkspacePage() {
     error: workspaceError,
   } = useQuery({
     queryKey: ["workspace", workspaceId],
-    queryFn: () => workspaceApi.getOneWorkspace(workspaceId),
+    queryFn: () => dashboardApi.getOneWorkspace(workspaceId),
   });
 
   if (isLoading) {

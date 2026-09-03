@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, PresenceDot } from "@/components/ui/avatar";
 import { mockChannels, mockMessages, mockUsers } from "@/constants/mock-data";
 import { cn, formatTimestamp, initials } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { workspaceApi } from "@/api/workspace";
+import { dashboardApi } from "@/api/dashboard";
 
 export function WorkspaceList() {
   const {
@@ -15,7 +15,7 @@ export function WorkspaceList() {
     error,
   } = useQuery({
     queryKey: ["workspaces"],
-    queryFn: workspaceApi.getMyWorkspaces,
+    queryFn: dashboardApi.getMyWorkspaces,
   });
 
   if (isLoading) {
@@ -57,66 +57,116 @@ export function WorkspaceList() {
 }
 
 export function RecentConversations() {
-  const recents = mockMessages
-    .slice()
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5);
+  const {
+    data: conversations,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["dashboard", "recent-conversations"],
+    queryFn: dashboardApi.getRecentConversations,
+  });
+
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground">Loading...</p>;
+  }
+
+  if (error) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Unable to load recent conversations.
+      </p>
+    );
+  }
+
+  if (!conversations || conversations.length === 0) {
+    return (
+      <p className="px-3 py-2 text-sm text-muted-foreground">
+        No recent conversations.
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-1">
-      {recents.map((m) => {
-        const channel = mockChannels.find((c) => c.id === m.channelId);
-        return (
-          <Link
-            key={m.id}
-            href={`/servers/s1/channels/${m.channelId}`}
-            className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-surface-sunken"
-          >
-            <div className="relative">
-              <Avatar className="size-9">
-                <AvatarFallback>{initials(m.author.name)}</AvatarFallback>
-              </Avatar>
-              <PresenceDot status={m.author.status} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm">
-                <span className="font-medium">{m.author.name}</span>{" "}
-                <span className="text-muted-foreground">
-                  in #{channel?.name ?? "unknown"}
-                </span>
-              </p>
-              <p className="truncate text-xs text-muted-foreground">{m.content}</p>
-            </div>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {formatTimestamp(m.createdAt)}
-            </span>
-          </Link>
-        );
-      })}
+      {conversations.map((message) => (
+        <Link
+          key={message.id}
+          href={`/workspaces/${message.channel.workspace_id}/channels/${message.channel_id}`}
+          className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-surface-sunken"
+        >
+          <Avatar className="size-9">
+            <AvatarFallback>
+              {initials(message.user.username)}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm">
+              <span className="font-medium">
+                {message.user.username}
+              </span>{" "}
+              <span className="text-muted-foreground">
+                in #{message.channel.name}
+              </span>
+            </p>
+
+            <p className="truncate text-xs text-muted-foreground">
+              {message.content}
+            </p>
+          </div>
+
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {formatTimestamp(message.created_at)}
+          </span>
+        </Link>
+      ))}
     </div>
   );
 }
 
 export function PinnedChannels() {
-  const pinned = mockChannels.filter((c) => c.isFavorite);
+  const {
+    data: pinned,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["dashboard", "pinned-channels"],
+    queryFn: dashboardApi.getPinnedChannels,
+  });
+
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground">Loading...</p>;
+  }
+
+  if (error) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Unable to load pinned channels.
+      </p>
+    );
+  }
+
+  if (!pinned || pinned.length === 0) {
+    return (
+      <p className="px-3 py-2 text-xs text-muted-foreground">
+        Pin a channel to find it here quickly.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-1">
-      {pinned.map((c) => (
+      {pinned.map((channel) => (
         <Link
-          key={c.id}
-          href={`/servers/${c.serverId}/channels/${c.id}`}
+          key={channel.id}
+          href={`/workspaces/${channel.workspace_id}/channels/${channel.id}`}
           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-sunken"
         >
           <Star className="size-3.5 text-warning" />
           <Hash className="size-3.5 text-muted-foreground" />
-          {c.name}
+          {channel.name}
         </Link>
       ))}
-      {pinned.length === 0 && (
-        <p className="px-3 py-2 text-xs text-muted-foreground">
-          Pin a channel to find it here quickly.
-        </p>
-      )}
     </div>
   );
 }

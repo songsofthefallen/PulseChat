@@ -57,6 +57,6 @@ def presence(user_id: int, redis_client: redis.Redis = Depends(Dependencies.get_
 
     return UserPresenceResponse(
         user_id=user_id,
-        status="Online" if status else "Offline"
+        status="online" if status else "offline"
     )
 

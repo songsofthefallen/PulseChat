@@ -66,6 +66,25 @@ export interface Message {
   user: MessageUser;
 }
 
+export interface RecentConversation {
+  id: number;
+  channel_id: number;
+  content: string;
+  created_at: string;
+  user: MessageUser;
+  channel: {
+    id: number;
+    workspace_id: number;
+    name: string;
+  };
+}
+
+export interface PinnedChannel {
+  id: number;
+  workspace_id: number;
+  name: string;
+}
+
 export interface NotificationItem {
   id: string;
   type: "mention" | "reply" | "reaction" | "system" | "invite";

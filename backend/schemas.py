@@ -70,9 +70,28 @@ class MessageResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class RecentConversationChannelResponse(BaseModel):
+    id: int
+    workspace_id: int
+    name: str
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RecentConversationResponse(BaseModel):
+    id: int
+    channel_id: int
+    content: str
+    created_at: datetime
+    user: MessageUserResponse
+    channel: RecentConversationChannelResponse
+
+    model_config = ConfigDict(from_attributes=True)
+    
 class SendMessageRequest(BaseModel):
     content: str
 
 class UserPresenceResponse(BaseModel):
     user_id: int
-    status: Literal["Online", "Offline"]
+    status: Literal["online", "offline"]
+

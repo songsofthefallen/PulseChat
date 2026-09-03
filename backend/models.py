@@ -75,6 +75,12 @@ class Channel(Base):
     workspace = relationship("Workspace",back_populates="channels")
     messages = relationship("Message",back_populates="channel",cascade="all, delete-orphan")
 
+class PinnedChannel(Base):
+    __tablename__ = "pinned_channels"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    channel_id = Column(Integer, ForeignKey("channels.id", ondelete="CASCADE"), primary_key=True)
+
 class Message(Base):
     __tablename__ = "messages"
 

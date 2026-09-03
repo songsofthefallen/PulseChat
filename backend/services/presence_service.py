@@ -55,7 +55,7 @@ class PresenceService:
         return [
             UserPresenceResponse(
                 user_id=user_id,
-                status="Online" if value is not None else "Offline"
+                status="online" if value is not None else "offline"
             )
             for user_id, value in zip(user_ids, values)
         ]
