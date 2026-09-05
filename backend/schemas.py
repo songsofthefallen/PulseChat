@@ -95,3 +95,18 @@ class UserPresenceResponse(BaseModel):
     user_id: int
     status: Literal["online", "offline"]
 
+class CreateWorkspaceRequest(BaseModel):
+    name: str
+
+class UpdateWorkspaceRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+class AddWorkspaceMemberRequest(BaseModel):
+    user_id: int
+
+class WorkspaceMemberResponse(BaseModel):
+    user: UserResponse
+    role: str
+
+class UpdateWorkspaceMemberRoleRequest(BaseModel):
+    role: Literal["member", "admin"]

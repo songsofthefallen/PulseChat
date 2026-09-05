@@ -1,16 +1,11 @@
 from sqlalchemy.orm import Session
 from models import Message, PinnedChannel
 from repository.dashboard_repository import DashboardRepository
+from repository.workspace_repository import WorkspaceRepository
 from fastapi import HTTPException
 from schemas import SendMessageRequest
 
 class DashboardService:
-
-    @staticmethod
-    def get_workspaces(user_id: int, db: Session):
-        workspaces = DashboardRepository.get_list_of_workspace(user_id, db)
-
-        return workspaces
 
     @staticmethod
     def get_one_workspace(workspace_id: int, user_id: int, db: Session):

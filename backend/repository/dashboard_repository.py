@@ -2,14 +2,6 @@ from sqlalchemy.orm import Session, joinedload
 from models import Workspace, WorkspaceMember, Channel, Message, PinnedChannel
 
 class DashboardRepository:
-
-    @staticmethod
-    def get_list_of_workspace(user_id: int, db: Session):
-        return db.query(Workspace).join(
-            WorkspaceMember, Workspace.id == WorkspaceMember.workspace_id).filter(
-                WorkspaceMember.user_id == user_id
-            ).all()
-
     @staticmethod
     def get_one_workspace(workspace_id: int, user_id: int, db: Session):
         return db.query(Workspace).join(

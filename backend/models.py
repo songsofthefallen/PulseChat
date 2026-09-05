@@ -62,6 +62,8 @@ class WorkspaceMember(Base):
 
     workspace_id = Column(Integer,ForeignKey("workspaces.id", ondelete="CASCADE"), primary_key=True)
 
+    role = Column(String(20), nullable=False, default="member")
+
     user = relationship("User", back_populates="workspace_members")
     workspace = relationship("Workspace", back_populates="members")
 

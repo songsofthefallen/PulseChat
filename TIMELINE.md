@@ -15,11 +15,11 @@ PulseChat is a real-time team chat application (Discord/Slack-style) with a Next
 
 ### Frontend Features
 - ✅ **Authentication UI**
-  - Login form with validation
-  - Register form with validation
-  - Forgot password flow
-  - Reset password flow
-  - Session expired handler
+- ✅ Login form with validation
+- ✅ Register form with validation
+- ✅ Forgot password flow
+- ✅ Reset password flow
+- ✅ Session expired handler
 - ✅ **Main Chat Interface**
   - Server rail with server list
   - Collapsible channel sidebar with favorites, categories, unread badges
@@ -54,26 +54,26 @@ PulseChat is a real-time team chat application (Discord/Slack-style) with a Next
 ## 🔄 Phase 2: Backend Core & Authentication (In Progress / Next)
 
 ### Priority 1: Authentication & User Management
-- [ ] **User Registration & Login**
+- ✅ **User Registration & Login**
   - User model refinement (password hashing, email verification)
   - JWT token generation and refresh logic
   - Email verification flow
   - Password hashing utilities
   - Login endpoint integration
   
-- [ ] **Password Reset**
+- ✅ **Password Reset**
   - Password reset token generation
   - Email sending (reset link)
   - Password reset endpoint
   - Token validation
 
-- [ ] **User Profile**
+- ✅ **User Profile**
   - Get user profile endpoint
   - Update profile endpoint (username, avatar, bio)
   - User presence tracking
 
 ### Priority 2: Server & Channel Management
-- [ ] **Server CRUD**
+- ✅ **Server CRUD**
   - Create server
   - Get user's servers
   - Update server settings

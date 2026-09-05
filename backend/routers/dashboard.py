@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from models import User
 from services.auth_service import AuthService
 from services.dashboard_service import DashboardService
+from services.workspace_service import WorkspaceService
 from database import get_db
 from schemas import WorkspaceResponse, MessageResponse, SendMessageRequest, RecentConversationResponse
 
@@ -11,7 +12,7 @@ router = APIRouter()
 @router.get("/dashboard/workspaces")
 def get_my_workspaces(current_user: User = Depends (AuthService.get_current_user), db: Session = Depends(get_db)):
 
-    return DashboardService.get_workspaces(current_user.id, db)
+    return WorkspaceService.get_user_workspaces(current_user.id, db)
 
 @router.get("/dashboard/workspaces/{workspace_id}", response_model=WorkspaceResponse)
 def get_workspace(workspace_id: int, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):

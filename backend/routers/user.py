@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from schemas import  UserResponse, UpdateProfileRequest, UserPresenceResponse, UserResponse
+from schemas import UserResponse, UpdateProfileRequest, UserPresenceResponse, UserResponse
 from services.auth_service import AuthService
 from database import get_db
 from models import User
