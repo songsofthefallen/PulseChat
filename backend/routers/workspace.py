@@ -46,4 +46,4 @@ def delete_workspace_member(workspace_id: int, user_id: int, current_user: User 
 @router.patch("/workspace/{workspace_id}/members/{user_id}")
 def update_workspace_member_role(workspace_id: int, user_id: int, data: UpdateWorkspaceMemberRoleRequest, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
 
-    return WorkspaceService.delete_workspace_member_role(workspace_id, user_id, data.role, current_user.id, db)
+    return WorkspaceService.update_workspace_member_role(workspace_id, user_id, data.role, current_user.id, db)

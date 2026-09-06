@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from models import Message, PinnedChannel
 from repository.dashboard_repository import DashboardRepository
 from repository.workspace_repository import WorkspaceRepository
+from repository.channel_repository import ChannelRepository
 from fastapi import HTTPException
 from schemas import SendMessageRequest
 
@@ -13,13 +14,6 @@ class DashboardService:
         if workspace is None:
             raise HTTPException(status_code=404, detail='Workspace Doesnt Exist')
         return workspace
-
-    @staticmethod
-    def get_channels(workspace_id: int, user_id: int, db: Session):
-        channels = DashboardRepository.get_list_of_channels(workspace_id, user_id, db)
-        if not channels:
-            raise HTTPException(status_code=404, detail='No Channel Exist')
-        return channels
 
     @staticmethod
     def get_one_channel(workspace_id: int, channel_id: int, user_id: int, db: Session):

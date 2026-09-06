@@ -59,7 +59,7 @@ class WorkspaceService:
         owner = WorkspaceRepository.get_workspace_owner(workspace_id, user_id, db)
 
         if owner is None:
-            raise HTTPException(status_code=403, detail="Only the workspace owner can update the workspace")
+            raise HTTPException(status_code=403, detail="Only the workspace owner can delete the workspace")
 
         db.delete(workspace)
 
@@ -80,7 +80,7 @@ class WorkspaceService:
         owner = WorkspaceRepository.get_workspace_owner(workspace_id, user_id, db)
 
         if owner is None:
-            raise HTTPException(status_code=403, detail="Only the workspace owner can update the workspace")
+            raise HTTPException(status_code=403, detail="Only the workspace owner can add a member")
 
         AuthService.find_user_by_id(added_user_id, db) #checks if the user exist
 

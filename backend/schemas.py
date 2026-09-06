@@ -110,3 +110,10 @@ class WorkspaceMemberResponse(BaseModel):
 
 class UpdateWorkspaceMemberRoleRequest(BaseModel):
     role: Literal["member", "admin"]
+
+class CreateChannelRequest(BaseModel):
+    name: str
+
+class UpdateChannelRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import auth, user, dashboard, workspace
+from routers import auth, user, dashboard, workspace, channel
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -18,3 +18,4 @@ app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(user.router)
 app.include_router(workspace.router)
+app.include_router(channel.router)
