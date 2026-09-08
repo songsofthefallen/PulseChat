@@ -35,10 +35,6 @@ def get_my_messages(workspace_id: int, channel_id: int, current_user: User = Dep
 
     return DashboardService.get_messages(workspace_id, channel_id, current_user.id, db)
 
-@router.post("/workspaces/{workspace_id}/channels/{channel_id}/messages",response_model=MessageResponse)
-def send_message( workspace_id: int, channel_id: int, message: SendMessageRequest, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
-
-    return DashboardService.send_message( workspace_id, channel_id, current_user.id, message, db)
 
 @router.get("/dashboard/recent-conversations", response_model=list[RecentConversationResponse])
 def get_recent_conversations(current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):

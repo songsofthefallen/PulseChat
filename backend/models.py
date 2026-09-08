@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, DateTime, Column, ForeignKey, Boolean
+from sqlalchemy import String, Integer, DateTime, Column, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime, UTC
@@ -76,12 +76,27 @@ class Channel(Base):
 
     workspace = relationship("Workspace",back_populates="channels")
     messages = relationship("Message",back_populates="channel",cascade="all, delete-orphan")
-
+    permissions = relationship("ChannelPermission", back_populates="channel", cascade="all, delete-orphan")
+    
 class PinnedChannel(Base):
     __tablename__ = "pinned_channels"
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     channel_id = Column(Integer, ForeignKey("channels.id", ondelete="CASCADE"), primary_key=True)
+
+class ChannelPermission(Base):
+    __tablename__ = "channel_permissions"
+
+    id = Column(Integer, primary_key=True)
+    channel_id = Column(Integer, ForeignKey("channels.id", ondelete="CASCADE"), nullable=False)
+    role = Column(String(20), nullable=False, default="member", )
+    can_view = Column(Boolean, default=False, nullable=False)
+    can_send = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("channel_id", "role"),
+    )
+    channel = relationship("Channel", back_populates="permissions")
 
 class Message(Base):
     __tablename__ = "messages"
