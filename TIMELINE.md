@@ -80,7 +80,7 @@ PulseChat is a real-time team chat application (Discord/Slack-style) with a Next
   - Delete server
   - Server member management
 
-- [ ] **Channel CRUD**
+- ✅ **Channel CRUD**
   - Create channel within server
   - List channels
   - Update channel settings

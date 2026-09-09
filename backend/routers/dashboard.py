@@ -6,7 +6,7 @@ from services.dashboard_service import DashboardService
 from services.workspace_service import WorkspaceService
 from services.channel_service import ChannelService
 from database import get_db
-from schemas import WorkspaceResponse, MessageResponse, SendMessageRequest, RecentConversationResponse
+from schemas import WorkspaceResponse, RecentConversationResponse
 
 router = APIRouter()
 
@@ -29,12 +29,6 @@ def get_my_channels(workspace_id: int, current_user: User = Depends (AuthService
 def get_channel(workspace_id: int, channel_id: int, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
 
     return DashboardService.get_one_channel(workspace_id, channel_id, current_user.id, db)
-
-@router.get("/workspaces/{workspace_id}/channels/{channel_id}/messages", response_model=list[MessageResponse])
-def get_my_messages(workspace_id: int, channel_id: int, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
-
-    return DashboardService.get_messages(workspace_id, channel_id, current_user.id, db)
-
 
 @router.get("/dashboard/recent-conversations", response_model=list[RecentConversationResponse])
 def get_recent_conversations(current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):

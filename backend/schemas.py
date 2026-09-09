@@ -91,6 +91,9 @@ class RecentConversationResponse(BaseModel):
 class SendMessageRequest(BaseModel):
     content: str
 
+class UpdateMessageRequest(BaseModel):
+    content: str
+
 class UserPresenceResponse(BaseModel):
     user_id: int
     status: Literal["online", "offline"]
@@ -117,3 +120,6 @@ class CreateChannelRequest(BaseModel):
 class UpdateChannelRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100)
 
+class UpdateChannelPermissionRequest(BaseModel):
+    can_view: bool
+    can_send: bool

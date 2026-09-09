@@ -31,20 +31,6 @@ class DashboardRepository:
         ).first()
 
     @staticmethod
-    def get_list_of_messages(workspace_id: int, channel_id: int, user_id:int, db: Session):
-        return db.query(Message).join(
-            Channel, Channel.id == Message.channel_id).join(
-                WorkspaceMember, WorkspaceMember.workspace_id == Channel.workspace_id
-                    ).options(
-                        joinedload(Message.user)
-                        ).filter(
-                            WorkspaceMember.user_id == user_id,
-                            Channel.workspace_id == workspace_id,
-                            Message.channel_id == channel_id
-                        ).order_by(Message.created_at.asc()).all()
-
-
-    @staticmethod
     def get_recent_conversations(user_id: int, db: Session):
         return (db.query(Message).join(
             Channel, Channel.id == Message.channel_id).join(

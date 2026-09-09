@@ -1,4 +1,4 @@
-from models import Channel, WorkspaceMember, Workspace
+from models import Channel, WorkspaceMember
 from sqlalchemy.orm import Session
 
 class ChannelRepository:
@@ -31,6 +31,7 @@ class ChannelRepository:
     @staticmethod
     def is_channel_name_exist_for_update(workspace_id: int, channel_id: int, name: str, db: Session):
         return db.query(Channel).filter(Channel.workspace_id == workspace_id, Channel.name == name, Channel.id != channel_id).first()
+
 
 
 

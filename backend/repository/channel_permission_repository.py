@@ -15,3 +15,4 @@ class ChannelPermissionRepository:
     @staticmethod
     def get_channel_permission(channel_id: int, role: str, db: Session):
         return db.query(ChannelPermission).filter(ChannelPermission.channel_id == channel_id, ChannelPermission.role == role).first()
+

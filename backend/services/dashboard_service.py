@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
-from models import Message, PinnedChannel
+from models import  PinnedChannel
 from repository.dashboard_repository import DashboardRepository
 from fastapi import HTTPException
-from schemas import SendMessageRequest
 
 class DashboardService:
 
@@ -26,11 +25,6 @@ class DashboardService:
         if channel is None:
             raise HTTPException(status_code=404, detail='Channel Not Found')
         return channel
-    
-    @staticmethod
-    def get_messages(workspace_id: int, channel_id: int, user_id: int, db: Session):
-        messages = DashboardRepository.get_list_of_messages(workspace_id, channel_id, user_id, db)
-        return messages
 
     @staticmethod
     def get_recent_conversations(user_id: int, db: Session):

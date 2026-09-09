@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int =587
     PRESENCE_TTL: int = 60
+    MESSAGES_PER_PAGE: int = 10
 
     model_config = SettingsConfigDict(
         env_file=".env",

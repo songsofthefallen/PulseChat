@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from services.workspace_service import WorkspaceRepository
 from repository.channel_repository import ChannelRepository
 from repository.channel_permission_repository import ChannelPermissionRepository
+from schemas import UpdateChannelPermissionRequest
 
 class ChannelService:
 
@@ -136,6 +137,53 @@ class ChannelService:
             raise HTTPException(status_code=403, detail="User cannot view this channel")
 
         return channel
+
+    @staticmethod
+    def update_channel_permission(workspace_id: int, channel_id: int, role: str, data: UpdateChannelPermissionRequest, user_id: int, db: Session):
+        workspace = WorkspaceRepository.get_workspace(workspace_id, db)
+
+        if workspace is None:
+            raise HTTPException(status_code=404, detail="Workspace Doesnt Exist")
+
+        channel = ChannelRepository.channel_exist_in_workspace(workspace_id, channel_id, db)
+
+        if channel is None:
+            raise HTTPException(status_code=404, detail="Channel doesnt exist in this workspace")
+
+        member = WorkspaceRepository.get_workspace_member(workspace_id, user_id, db)
+
+        if member is None:
+            raise HTTPException(status_code=403, detail="User is not a member of this workspace")
+
+        if member.role not in ["owner", "admin"]:
+            raise HTTPException(status_code=403, detail="Only the owner and admin can update the channel")
+
+        if member.role == "admin" and role == "owner":
+            raise HTTPException(status_code=403, detail="Admin cannot modify owner permissions")
+
+        if role not in ["owner", "admin", "member"]:
+            raise HTTPException(status_code=400, detail="This role is invalid")
+
+        channel_permission = ChannelPermissionRepository.get_channel_permission(channel_id, role, db)
+
+        if channel_permission is None:
+            raise HTTPException(status_code=403, detail="Channel Permission Doesnt Exist")
+
+        channel_permission.can_send = data.can_send
+        channel_permission.can_view = data.can_view
+
+        try:
+            db.commit()
+            db.refresh(channel_permission)
+        except:
+            db.rollback()
+            raise
+
+        return channel_permission
+
+
+
+
 
 
         
