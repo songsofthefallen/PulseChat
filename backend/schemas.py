@@ -28,6 +28,7 @@ class RegisterResponse(BaseModel):
     message: str
     user: UserResponse
 
+
 class LoginUser(BaseModel):
     email: EmailStr
     password: str
@@ -67,8 +68,17 @@ class MessageResponse(BaseModel):
     content: str
     created_at: datetime
     user: MessageUserResponse
+    attachments: list[MessageAttachmentResponse] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MessageAttachmentResponse(BaseModel):
+    id: int
+    file_name: str
+    file_url: str
+    file_type: str
+    file_size: int
 
 class RecentConversationChannelResponse(BaseModel):
     id: int
@@ -123,3 +133,4 @@ class UpdateChannelRequest(BaseModel):
 class UpdateChannelPermissionRequest(BaseModel):
     can_view: bool
     can_send: bool
+

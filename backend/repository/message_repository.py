@@ -1,4 +1,4 @@
-from models import Message
+from models import Message, MessageAttachment
 from sqlalchemy.orm import Session, joinedload
 
 class MessageRepository:
@@ -20,3 +20,13 @@ class MessageRepository:
     @staticmethod
     def get_channel_message(channel_id: int, message_id, db):
         return db.query(Message).filter(Message.channel_id == channel_id, Message.id == message_id).first()
+
+    @staticmethod
+    def create_attachment( message_id: int,file_name: str,file_url: str,file_type: str,file_size: int,db: Session):
+
+        attachment = MessageAttachment( message_id=message_id,file_name=file_name,file_url=file_url,file_type=file_type,file_size=file_size)
+
+        db.add(attachment)
+        db.flush()
+
+        return attachment

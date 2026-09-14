@@ -109,3 +109,54 @@ class Message(Base):
 
     channel = relationship("Channel", back_populates="messages")
     user = relationship("User", back_populates="messages")
+    attachments = relationship("MessageAttachment", back_populates="message", cascade="all, delete-orphan")
+
+class MessageAttachment(Base):
+    __tablename__ = "message_attachments"
+
+    id = Column(Integer, primary_key=True)
+
+    message_id = Column( Integer,ForeignKey("messages.id", ondelete="CASCADE"),nullable=False)
+    file_name = Column(String(255), nullable=False)
+    file_url = Column(String(500), nullable=False)
+    file_type = Column(String(100), nullable=False)
+    file_size = Column(Integer, nullable=False)
+
+    message = relationship("Message", back_populates="attachments")
+
+class DMConversation(Base):
+    __tablename__ = "dm_conversations"
+
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+    participants = relationship( "DMParticipant",back_populates="conversation",cascade="all, delete-orphan")
+
+    messages = relationship( "DMMessage",back_populates="conversation",cascade="all, delete-orphan")
+
+class DMParticipant(Base):
+    __tablename__ = "dm_participants"
+
+    conversation_id = Column(Integer,ForeignKey("dm_conversations.id", ondelete="CASCADE"),primary_key=True)
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"),primary_key=True)
+
+    conversation = relationship( "DMConversation",back_populates="participants")
+
+    user = relationship("User")
+
+class DMMessage(Base):
+    __tablename__ = "dm_messages"
+
+    id = Column(Integer, primary_key=True)
+
+    conversation_id = Column( Integer,ForeignKey("dm_conversations.id", ondelete="CASCADE"),nullable=False)
+
+    user_id = Column( Integer,ForeignKey("users.id", ondelete="CASCADE"),nullable=False)
+
+    content = Column(String(2000), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+    conversation = relationship( "DMConversation",back_populates="messages")
+
+    user = relationship("User")

@@ -1,15 +1,17 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from repository.workspace_repository import WorkspaceRepository
 from repository.channel_repository import ChannelRepository
 from repository.channel_permission_repository import ChannelPermissionRepository
 from repository.message_repository import MessageRepository
 from config import settings
+import os
+import uuid
 
 
 class MessageService:
     @ staticmethod
-    def send_message(workspace_id: int, channel_id: int, user_id: int, content: str, db: Session):
+    def send_message(workspace_id: int, channel_id: int, content: str, file: UploadFile | None, user_id: int, db: Session):
         workspace = WorkspaceRepository.get_workspace(workspace_id, db)
 
         if workspace is None:
@@ -31,12 +33,60 @@ class MessageService:
             raise HTTPException(status_code=403, detail="User cannot send messages in this channel")
 
         db_message = MessageRepository.create_message(channel_id, user_id, content, db)
+        
+
+        if file:
+
+            file_content = file.file.read()
+            file_size = len(file_content)
+
+            if file_size > settings.MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=400,
+                    detail="File size cannot exceed 10 MB"
+                )
+
+            if file.content_type not in settings.ALLOWED_FILE_TYPES:
+                raise HTTPException(
+                    status_code=400,
+                    detail="File type is not allowed"
+                )
+
+            upload_dir = "uploads"
+            os.makedirs(upload_dir, exist_ok=True)
+
+            unique_name = str(uuid.uuid4())
+
+            extension = os.path.splitext(file.filename)[1]
+            stored_name = f"{unique_name}{extension}"
+
+            file_details = os.path.join(upload_dir, stored_name)
+
+            with open(file_details, "wb") as buffer:
+                buffer.write(file_content)
+
+            file_name = file.filename
+            file_type = file.content_type
+            file_url = file_details
+
+            MessageRepository.create_attachment(
+                message_id=db_message.id,
+                file_name=file_name,
+                file_url=file_url,
+                file_type=file_type,
+                file_size=file_size,
+                db=db
+            )
 
         try:
             db.commit()
             db.refresh(db_message)
-        except:
+        except Exception:
             db.rollback()
+
+            if file and os.path.exists(file_details):
+                os.remove(file_details)
+
             raise
 
         return db_message
