@@ -27,6 +27,11 @@ class UserRepository:
     @staticmethod
     def get_all_users(db: Session):
         return db.query(User).all()
+    
+    @staticmethod
+    def get_users_by_ids( user_ids: list[int],db: Session):
+        return db.query(User).filter(User.id.in_(user_ids)).all()
+        
 
 
 

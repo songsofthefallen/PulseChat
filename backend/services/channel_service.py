@@ -38,7 +38,7 @@ class ChannelService:
         try:
             db.commit()
             db.refresh(channel)
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -78,7 +78,7 @@ class ChannelService:
         try:
             db.commit()
             db.refresh(channel)
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -108,7 +108,7 @@ class ChannelService:
 
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -175,7 +175,7 @@ class ChannelService:
         try:
             db.commit()
             db.refresh(channel_permission)
-        except:
+        except Exception:
             db.rollback()
             raise
 

@@ -22,9 +22,9 @@ class MessageRepository:
         return db.query(Message).filter(Message.channel_id == channel_id, Message.id == message_id).first()
 
     @staticmethod
-    def create_attachment( message_id: int,file_name: str,file_url: str,file_type: str,file_size: int,db: Session):
+    def create_attachment(file_name: str,file_url: str,file_type: str,file_size: int,db: Session, message_id: int | None = None, dm_message_id: int | None = None):
 
-        attachment = MessageAttachment( message_id=message_id,file_name=file_name,file_url=file_url,file_type=file_type,file_size=file_size)
+        attachment = MessageAttachment(message_id=message_id,dm_message_id=dm_message_id,file_name=file_name,file_url=file_url,file_type=file_type,file_size=file_size)
 
         db.add(attachment)
         db.flush()

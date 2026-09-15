@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, DateTime, Column, ForeignKey, Boolean, UniqueConstraint
+from sqlalchemy import String, Integer, DateTime, Column, ForeignKey, Boolean, UniqueConstraint, CheckConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime, UTC
@@ -116,13 +116,23 @@ class MessageAttachment(Base):
 
     id = Column(Integer, primary_key=True)
 
-    message_id = Column( Integer,ForeignKey("messages.id", ondelete="CASCADE"),nullable=False)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"),nullable=True)
+    dm_message_id = Column(Integer, ForeignKey("dm_messages.id", ondelete="CASCADE"),nullable=True)
     file_name = Column(String(255), nullable=False)
     file_url = Column(String(500), nullable=False)
     file_type = Column(String(100), nullable=False)
     file_size = Column(Integer, nullable=False)
 
     message = relationship("Message", back_populates="attachments")
+    dm_message = relationship("DMMessage", back_populates="attachments")
+
+    __table_args__ = (
+        CheckConstraint(
+            "(message_id IS NOT NULL AND dm_message_id IS NULL) OR "
+            "(message_id IS NULL AND dm_message_id IS NOT NULL)",
+            name="ck_attachment_one_message"
+        ),
+    )
 
 class DMConversation(Base):
     __tablename__ = "dm_conversations"
@@ -160,3 +170,4 @@ class DMMessage(Base):
     conversation = relationship( "DMConversation",back_populates="messages")
 
     user = relationship("User")
+    attachments = relationship("MessageAttachment", back_populates="dm_message", cascade="all, delete-orphan")

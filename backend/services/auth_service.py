@@ -91,7 +91,7 @@ class AuthService:
         db.add(refresh_token)
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -161,7 +161,7 @@ class AuthService:
 
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
 

@@ -43,7 +43,7 @@ class DashboardService:
         db.add(pinned_channel)
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -60,7 +60,7 @@ class DashboardService:
 
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
 

@@ -14,7 +14,7 @@ class WorkspaceService:
         try:
             db.commit()
             db.refresh(workspace)
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -43,7 +43,7 @@ class WorkspaceService:
         try:
             db.commit()
             db.refresh(workspace)
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -61,11 +61,12 @@ class WorkspaceService:
         if owner is None:
             raise HTTPException(status_code=403, detail="Only the workspace owner can delete the workspace")
 
-        db.delete(workspace)
+        
 
         try:
+            db.delete(workspace)
             db.commit()
-        except:
+        except Exception:
             db.rollback()
 
         return {"Message": "Workspace Deleted"}
@@ -95,7 +96,7 @@ class WorkspaceService:
 
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -141,7 +142,7 @@ class WorkspaceService:
 
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -173,7 +174,7 @@ class WorkspaceService:
 
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
 

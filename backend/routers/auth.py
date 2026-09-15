@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Response, Request
 from sqlalchemy.orm import Session
-from schemas import RegisterUser, RegisterResponse, LoginUser, ForgotPasswordData, VerifyResetCodeRequest, ResetPasswordRequest, UserResponse
+from schemas import RegisterUser, RegisterResponse, LoginUser, ForgotPasswordData, VerifyResetCodeRequest, ResetPasswordRequest
 from services.auth_service import AuthService
 from services.password_reset_service import PasswordResetService
 from database import get_db
-from models import User
+
 
 
 router = APIRouter()

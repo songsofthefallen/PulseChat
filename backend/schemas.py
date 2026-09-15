@@ -134,3 +134,29 @@ class UpdateChannelPermissionRequest(BaseModel):
     can_view: bool
     can_send: bool
 
+class DMConversationResponse(BaseModel):
+    id: int
+    created_at: datetime
+    participants: list[DMParticipantResponse]
+
+class DMParticipantResponse(BaseModel):
+    user: DMParticipantUserResponse
+
+class DMParticipantUserResponse(BaseModel):
+    id: int
+    username: str
+    handle: str
+    avatar_url: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class DMMessageResponse(BaseModel):
+    id: int
+    content: str
+    created_at: datetime
+    user: DMParticipantUserResponse
+    attachments: list[MessageAttachmentResponse]
+
+    model_config = ConfigDict(from_attributes=True)
+
+

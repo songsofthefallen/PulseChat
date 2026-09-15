@@ -47,7 +47,7 @@ class PasswordResetService:
 
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -92,7 +92,7 @@ class PasswordResetService:
 
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
 
@@ -133,7 +133,7 @@ class PasswordResetService:
 
             try:
                 db.commit()
-            except:
+            except Exception:
                 db.rollback()
                 raise
 

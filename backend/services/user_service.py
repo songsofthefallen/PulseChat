@@ -53,3 +53,4 @@ class UserService:
             raise
 
         return current_user
+
