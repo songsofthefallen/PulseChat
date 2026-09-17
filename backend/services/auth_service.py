@@ -99,9 +99,18 @@ class AuthService:
             key="refresh_token",
             value=refresh.token,
             httponly=True,
-            secure=True,
+            secure=False,
             samesite='lax',
             max_age =  60 * 60 * 24 * 30
+        )
+
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=False,  #Change later testing
+            samesite="lax",
+            max_age=60 * 15
         )
 
         return {
@@ -112,9 +121,17 @@ class AuthService:
 
 
     @staticmethod
-    def get_current_user(credentials = Depends(bearer_scheme), db: Session = Depends(get_db)):
+    def get_current_user(request: Request, db: Session = Depends(get_db)):
 
-        token = credentials.credentials
+        token = request.cookies.get("access_token")
+
+        return AuthService.get_user_from_token(token, db)
+
+    @staticmethod
+    def get_user_from_token(token: str | None, db: Session):
+
+        if token is None:
+            raise HTTPException(status_code=401, detail="Authentication required")
         
         payload = JwtService.verify_access_token(token)
 
@@ -169,10 +186,22 @@ class AuthService:
             key="refresh_token",
             value=new_refresh_token.token,
             httponly=True,
-            secure=True,
+            secure=False,
             samesite='lax',
             max_age =  60 * 60 * 24 * 30
         )
+
+        response.set_cookie(
+            key="access_token",
+            value=new_access_token,
+            httponly=True,
+            secure=False,  #Change later testing
+            samesite="lax",
+            max_age=60 * 15
+        )
+
+
+
 
         return {
         "access_token": new_access_token,
