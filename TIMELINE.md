@@ -88,13 +88,13 @@ PulseChat is a real-time team chat application (Discord/Slack-style) with a Next
   - Channel permissions
 
 ### Priority 3: Core Messaging
-- [ ] **Message Storage & Retrieval**
+- ✅  **Message Storage & Retrieval**
   - Save messages to database
   - Fetch message history (pagination)
   - Delete/edit messages
   - Message attachments storage
 
-- [ ] **Direct Messages**
+- ✅  **Direct Messages**
   - Create DM conversations
   - Fetch DM history
   - List active DMs
@@ -104,12 +104,12 @@ PulseChat is a real-time team chat application (Discord/Slack-style) with a Next
 ## 🚀 Phase 3: Real-Time Features (WebSocket Integration)
 
 ### Real-Time Communication
-- [ ] **WebSocket Setup**
+- ✅  **WebSocket Setup**
   - Connection manager
   - Room/channel subscriptions
   - User connection tracking
 
-- [ ] **Live Messaging**
+- ✅  **Live Messaging**
   - Send message → broadcast to subscribed users
   - Typing indicators
   - Message delivery confirmation

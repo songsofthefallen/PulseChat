@@ -1,14 +1,11 @@
 from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect
-from websocket.connection_manager import ConnectionManager
+from websocket.connection_manager import manager
 from sqlalchemy.orm import Session
 from database import get_db
 from services.auth_service import AuthService
 import json
 
 router = APIRouter()
-
-manager = ConnectionManager()
-
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
@@ -27,7 +24,6 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
     try:
         while True:
             data = json.loads(await websocket.receive_text())
-            print(data)
 
             if data["type"] == "subscribe":
                 channel_id = data["channel_id"]
@@ -36,6 +32,19 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                     user.id,
                     channel_id
                 )
-                print(manager.rooms)
+
+            elif data["type"] == "typing":
+                channel_id = data["channel_id"]
+
+                await manager.broadcast_to_room(
+                    channel_id,
+                    {
+                        "type": "user_typing",
+                        "channel_id": channel_id,
+                        "user_id": user.id,
+                        "username": user.username
+                    }
+                )
+
     except WebSocketDisconnect:
         manager.disconnect(user.id)

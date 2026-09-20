@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { Message } from "@/types";
+import type { Message, MessageRead } from "@/types";
 
 
 
@@ -9,8 +9,18 @@ export const messagesApi = {
         `/workspaces/${workspaceId}/channels/${channelId}/messages`
       ),
 
-send: ( workspaceId: number, channelId: number, content: string,) => 
-  apiClient.post<Message>(`/workspaces/${workspaceId}/channels/${channelId}/messages`, { content },
+  getReadMessages: async (workspaceId: number,channelId: number) => {
+    const response = await apiClient.get<MessageRead[]>(`/workspaces/${workspaceId}/channels/${channelId}/read`);
+    return response.data;
+  },
+
+  send: ( workspaceId: number, channelId: number, content: string,) => 
+    apiClient.post<Message>(`/workspaces/${workspaceId}/channels/${channelId}/messages`, { content },
+    ),
+
+  markAsRead: (workspaceId: number, channelId: number, messageId: number) =>
+    apiClient.post(
+      `/workspaces/${workspaceId}/channels/${channelId}/messages/${messageId}/read`
   ),
 
   edit: (messageId: string, content: string) =>

@@ -9,6 +9,7 @@ import { MessageList } from "@/features/chat/message-list";
 import { Composer } from "@/features/chat/composer";
 import { mockChannels, mockMessages, currentUser } from "@/constants/mock-data";
 import type { Message } from "@/types";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 export default function ChannelPage() {
   const params = useParams<{ serverId: string; channelId: string }>();
@@ -16,6 +17,11 @@ export default function ChannelPage() {
   const [messages, setMessages] = React.useState<Message[]>(
     mockMessages.filter((m) => m.channelId === params.channelId)
   );
+
+  useWebSocket((event) => {
+  const data = JSON.parse(event.data);
+
+});
 
   function handleSend(content: string) {
     if (!channel) return;

@@ -1,5 +1,6 @@
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
+from models import User
 from repository.workspace_repository import WorkspaceRepository
 from repository.channel_repository import ChannelRepository
 from repository.channel_permission_repository import ChannelPermissionRepository
@@ -7,11 +8,12 @@ from repository.message_repository import MessageRepository
 from config import settings
 import os
 import uuid
+from websocket.connection_manager import manager
 
 
 class MessageService:
     @ staticmethod
-    def send_message(workspace_id: int, channel_id: int, content: str, file: UploadFile | None, user_id: int, db: Session):
+    async def send_message(workspace_id: int, channel_id: int, content: str, file: UploadFile | None, user_id: int, db: Session):
         workspace = WorkspaceRepository.get_workspace(workspace_id, db)
 
         if workspace is None:
@@ -31,8 +33,6 @@ class MessageService:
 
         if send is None or not send.can_send:
             raise HTTPException(status_code=403, detail="User cannot send messages in this channel")
-
-        db_message = MessageRepository.create_message(channel_id, user_id, content, db)
         
         file_details = None
 
@@ -98,9 +98,18 @@ class MessageService:
 
             raise
 
-        return message
+        await manager.broadcast_to_room(
+            channel_id,
+            {
+                "type": "new_message",
+                "message_id": message.id,
+                "channel_id": message.channel_id,
+                "user_id": message.user_id,
+                "content": message.content
+            }
+        )
 
-    
+        return message
 
     @staticmethod
     def get_messages(workspace_id: int, channel_id: int, page: int, user_id: int, db: Session):
@@ -205,3 +214,78 @@ class MessageService:
 
         return {"message": "Message Successfully Deleted"}
 
+    @staticmethod
+    async def mark_message_as_read(workspace_id: int, channel_id: int, message_id: int, current_user: User, db: Session):
+        workspace = WorkspaceRepository.get_workspace(workspace_id, db)
+
+        if workspace is None:
+            raise HTTPException(status_code=404, detail="Workspace Doesnt Exist")
+
+        channel = ChannelRepository.channel_exist_in_workspace(workspace_id,channel_id,db)
+
+        if channel is None:
+            raise HTTPException(status_code=404, detail="Channel doesnt exist in this workspace")
+
+        member = WorkspaceRepository.get_workspace_member(workspace_id, current_user.id,db)
+
+        if member is None:
+            raise HTTPException(status_code=403, detail="User is not a member of this workspace")
+
+        channel_message = MessageRepository.get_channel_message(channel_id, message_id,db)
+
+        if channel_message is None:
+            raise HTTPException(status_code=404, detail="Message doesnt exist in this channel")
+
+        message_read = MessageRepository.mark_message_as_read(message_id, current_user.id,db)
+
+        try:
+            db.commit()
+            db.refresh(message_read)
+
+        except Exception:
+            db.rollback()
+            raise
+
+        await manager.broadcast_to_room(
+            channel_id,
+            {
+                "type": "message_read",
+                "message_id": message_id,
+                "channel_id": channel_id,
+                "user_id": current_user.id,
+                "username": current_user.username,
+                "read_at": message_read.read_at.isoformat()
+            }
+        )
+
+        return message_read
+
+    @staticmethod
+    def get_read_messages(workspace_id: int, channel_id: int, user_id: int, db: Session):
+        workspace = WorkspaceRepository.get_workspace(workspace_id,db)
+
+        if workspace is None:
+            raise HTTPException(status_code=404, detail="Workspace Doesnt Exist")
+
+        channel = ChannelRepository.channel_exist_in_workspace(workspace_id,channel_id, db)
+
+        if channel is None:
+            raise HTTPException(status_code=404, detail="Channel doesnt exist in this workspace")
+
+        member = WorkspaceRepository.get_workspace_member(workspace_id, user_id, db)
+
+        if member is None:
+            raise HTTPException(status_code=403, detail="User is not a member of this workspace")
+
+        read_messages = MessageRepository.get_read_messages(channel_id, db)
+
+        return [
+            {
+                "user_id": read.user_id,
+                "message_id": read.message_id,
+                "read_at": read.read_at,
+                "username": read.user.username
+            }
+            for read in read_messages
+        ]
+    

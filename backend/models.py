@@ -21,7 +21,8 @@ class User(Base):
     password_resets = relationship('PasswordReset', back_populates='user')
     workspace_members = relationship("WorkspaceMember" ,back_populates="user", cascade="all, delete-orphan")
     messages = relationship("Message", back_populates="user")
- 
+    message_reads = relationship( "MessageRead",back_populates="user",cascade="all, delete-orphan") 
+    
 class RefreshToken(Base):
     __tablename__ = 'refresh_tokens'
     
@@ -110,6 +111,7 @@ class Message(Base):
     channel = relationship("Channel", back_populates="messages")
     user = relationship("User", back_populates="messages")
     attachments = relationship("MessageAttachment", back_populates="message", cascade="all, delete-orphan")
+    reads = relationship( "MessageRead",back_populates="message",cascade="all, delete-orphan")
 
 class MessageAttachment(Base):
     __tablename__ = "message_attachments"
@@ -133,6 +135,16 @@ class MessageAttachment(Base):
             name="ck_attachment_one_message"
         ),
     )
+
+class MessageRead(Base):
+    __tablename__ = "message_reads"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), primary_key=True)
+    read_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+    user = relationship("User", back_populates="message_reads")
+    message = relationship("Message", back_populates="reads")
 
 class DMConversation(Base):
     __tablename__ = "dm_conversations"

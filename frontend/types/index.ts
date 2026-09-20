@@ -66,6 +66,13 @@ export interface Message {
   user: MessageUser;
 }
 
+export interface MessageRead {
+  user_id: number;
+  message_id: number;
+  read_at: string;
+  username: string;
+}
+
 export interface RecentConversation {
   id: number;
   channel_id: number;

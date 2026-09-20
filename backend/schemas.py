@@ -101,6 +101,14 @@ class RecentConversationResponse(BaseModel):
 class SendMessageRequest(BaseModel):
     content: str
 
+class MessageReadResponse(BaseModel):
+    user_id: int
+    message_id: int
+    read_at: datetime
+    username: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 class UpdateMessageRequest(BaseModel):
     content: str
 
@@ -158,5 +166,7 @@ class DMMessageResponse(BaseModel):
     attachments: list[MessageAttachmentResponse]
 
     model_config = ConfigDict(from_attributes=True)
+
+
 
 

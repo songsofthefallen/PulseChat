@@ -1,17 +1,96 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { channelsApi } from "@/api/channels";
 import { messagesApi } from "@/api/messages";
+import { useWebSocket } from "@/hooks/use-websocket";
+import { authApi } from "@/api/auth";
+import type { MessageRead } from "@/types";
+
 
 export default function ChannelPage() {
   const params = useParams();
   const queryClient = useQueryClient();
-
+  const lastTypingRef = useRef(0);
+  const [typingUserId, setTypingUserId] = useState<number | null>(null);
+  const [typingUsername, setTypingUsername] = useState<string | null>(null);
+  const [readMessages, setReadMessages] = useState<MessageRead[]>([]);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const markedAsReadRef = useRef<Set<number>>(new Set());
   const workspaceId = Number(params.workspace_id);
   const channelId = Number(params.channel_id);
+  const { data: currentUser } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: authApi.me,
+  });
+  const { send } = useWebSocket(channelId, (event) => {
+  const data = JSON.parse(event.data);
+
+  if (data.type === "new_message") {
+    queryClient.invalidateQueries({
+      queryKey: ["messages", workspaceId, channelId],
+    });
+  }
+
+  if (data.type === "message_read") {
+    setReadMessages((previous) => [
+      ...previous,
+      {
+        user_id: data.user_id,
+        message_id: data.message_id,
+        read_at: data.read_at,
+        username: data.username,
+      },
+    ]);
+  }
+
+  if (data.type === "user_typing") {
+    if (!currentUser) {
+      return;
+    }
+
+  if (data.user_id !== currentUser.id) {
+    setTypingUserId(data.user_id);
+    setTypingUsername(data.username);
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      typingTimeoutRef.current = setTimeout(() => {
+        setTypingUserId(null);
+        }, 1000);
+      }
+    }
+  });
+
+  const { data: existingReadMessages } = useQuery({
+    queryKey: ["message-reads", workspaceId, channelId],
+    queryFn: () => messagesApi.getReadMessages(workspaceId, channelId),
+  });
+
+  useEffect(() => {
+    if (!existingReadMessages) return;
+
+    setReadMessages((previous) => {
+      const existing = new Map(
+        previous.map((read) => [`${read.user_id}-${read.message_id}`, read])
+      );
+
+      for (const read of existingReadMessages) {
+        existing.set(`${read.user_id}-${read.message_id}`, read);
+      }
+
+      return Array.from(existing.values());
+    });
+  }, [existingReadMessages]);
+
+
+  useEffect(() => {
+    console.log("Read messages updated:", readMessages);
+  }, [readMessages]);
 
   // Stores whatever the user is currently typing
   const [content, setContent] = useState("");
@@ -54,6 +133,22 @@ export default function ChannelPage() {
       setContent("");
     },
   });
+
+   const markAsReadMutation = useMutation({
+  mutationFn: (messageId: number) =>
+    messagesApi.markAsRead(workspaceId, channelId, messageId),
+  });
+
+  useEffect(() => {
+  if (!messagesResponse?.data) return;
+
+  messagesResponse.data.forEach((message) => {
+    if (markedAsReadRef.current.has(message.id)) return;
+
+    markedAsReadRef.current.add(message.id);
+    markAsReadMutation.mutate(message.id);
+  });
+  }, [messagesResponse]);
 
   if (isLoading) {
     return <div>Loading channel...</div>;
@@ -149,9 +244,29 @@ export default function ChannelPage() {
                     <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
                       {message.content}
                     </p>
+
+                    {readMessages
+                      .filter(
+                        (read) =>
+                          read.message_id === message.id &&
+                          read.user_id !== currentUser?.id
+                      )
+                      .map((read) => (
+                        <span
+                          key={read.user_id}
+                          className="text-xs text-muted-foreground"
+                        >
+                          Read by {read.username}
+                        </span>
+                      ))}
                   </div>
                 </div>
               ))}
+              {typingUserId !== null && (
+                <div className="text-sm text-muted-foreground">
+                  {typingUsername} is typing...
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -172,7 +287,20 @@ export default function ChannelPage() {
             <input
               type="text"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value);
+
+                const now = Date.now();
+
+                if (now - lastTypingRef.current >= 500) {
+                  send({
+                    type: "typing",
+                    channel_id: channelId,
+                  });
+
+                  lastTypingRef.current = now;
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleSendMessage();

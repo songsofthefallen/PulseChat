@@ -1,4 +1,4 @@
-from models import Message, MessageAttachment
+from models import Message, MessageAttachment, MessageRead
 from sqlalchemy.orm import Session, joinedload
 
 class MessageRepository:
@@ -16,7 +16,7 @@ class MessageRepository:
         return db.query(Message).options(
             joinedload(Message.user)).filter(
                 Message.channel_id == channel_id).order_by(
-                    Message.created_at.asc()).offset(offset).limit(limit).all()
+                    Message.created_at.desc()).offset(offset).limit(limit).all()
     @staticmethod
     def get_channel_message(channel_id: int, message_id, db):
         return db.query(Message).filter(Message.channel_id == channel_id, Message.id == message_id).first()
@@ -30,3 +30,21 @@ class MessageRepository:
         db.flush()
 
         return attachment
+
+    @staticmethod
+    def mark_message_as_read(message_id: int, user_id: int, db: Session):
+        existing = db.query(MessageRead).filter(MessageRead.message_id == message_id,MessageRead.user_id == user_id).first()
+
+        if existing:
+            return existing
+
+        message_read = MessageRead(message_id=message_id, user_id=user_id)
+
+        db.add(message_read)
+        db.flush()
+
+        return message_read
+
+    @staticmethod
+    def get_read_messages(channel_id: int, db: Session):
+        return db.query(MessageRead).options(joinedload(MessageRead.user)).join(Message, Message.id == MessageRead.message_id).filter(Message.channel_id == channel_id).all()
