@@ -20,7 +20,7 @@ class MessageRepository:
 
         return query.order_by(Message.id.desc()).limit(limit).all()
     @staticmethod
-    def get_channel_message(channel_id: int, message_id, db):
+    def get_channel_message(channel_id: int, message_id: int, db: Session):
         return db.query(Message).filter(Message.channel_id == channel_id, Message.id == message_id).first()
 
     @staticmethod

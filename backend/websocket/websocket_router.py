@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from database import get_db
 from services.auth_service import AuthService
 import json
+from repository.message_repository import MessageRepository
+from models import Message
 
 router = APIRouter()
 
@@ -43,6 +45,30 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                         "channel_id": channel_id,
                         "user_id": user.id,
                         "username": user.username
+                    }
+                )
+
+            elif data["type"] == "message_delivered":
+
+                db.rollback()
+
+                message = MessageRepository.get_channel_message(
+                    data["channel_id"],
+                    data["message_id"],
+                    db
+                )
+
+                message_test = db.query(Message).filter(
+                    Message.id == data["message_id"]
+                ).first()
+
+                await manager.send_to_user(
+                    message.user_id,
+                    {
+                        "type": "message_delivered",
+                        "message_id": data["message_id"],
+                        "channel_id": data["channel_id"],
+                        "user_id": user.id
                     }
                 )
 

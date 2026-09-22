@@ -10,9 +10,6 @@ const API_URL =
 export const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 

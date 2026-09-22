@@ -29,10 +29,24 @@ class ConnectionManager:
         if channel_id not in self.rooms:
             return
 
-        for user_id in self.rooms[channel_id]:
+        for user_id in list(self.rooms[channel_id]):
             websocket = self.active_connections.get(user_id)
 
             if websocket:
-                await websocket.send_json(message)
+                try:
+                    await websocket.send_json(message)
+                except Exception:
+                    self.disconnect(user_id)
+
+    async def send_to_user(self, user_id: int, message: dict):
+        websocket = self.active_connections.get(user_id)
+
+        if not websocket:
+            return
+
+        try:
+            await websocket.send_json(message)
+        except Exception:
+            self.disconnect(user_id)
 
 manager = ConnectionManager()

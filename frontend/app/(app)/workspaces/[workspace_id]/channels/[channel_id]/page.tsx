@@ -22,6 +22,7 @@ export default function ChannelPage() {
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const initialScrollDoneRef = useRef(false);
   const previousScrollHeightRef = useRef(0);
+  const messageObserverRef = useRef<IntersectionObserver | null>(null);
   const workspaceId = Number(params.workspace_id);
   const channelId = Number(params.channel_id);
   const { data: currentUser } = useQuery({
@@ -32,10 +33,17 @@ export default function ChannelPage() {
   const data = JSON.parse(event.data);
 
   if (data.type === "new_message") {
+    send({
+    type: "message_delivered",
+    message_id: data.message_id,
+    channel_id: data.channel_id,
+  });
     queryClient.invalidateQueries({
       queryKey: ["messages", workspaceId, channelId],
+      
     });
   }
+  
 
   if (data.type === "message_read") {
     setReadMessages((previous) => {
@@ -60,6 +68,10 @@ export default function ChannelPage() {
       ];
     });
   }
+
+  if (data.type === "message_delivered") {
+  console.log("MESSAGE DELIVERED:", data);
+}
 
   if (data.type === "user_typing") {
     if (!currentUser) {
@@ -101,11 +113,6 @@ export default function ChannelPage() {
       return Array.from(existing.values());
     });
   }, [existingReadMessages]);
-
-
-  useEffect(() => {
-    console.log("Read messages updated:", readMessages);
-  }, [readMessages]);
 
   // Stores whatever the user is currently typing
   const [content, setContent] = useState("");
@@ -184,14 +191,9 @@ useEffect(() => {
 
   // Sends a message to the backend
   const sendMessageMutation = useMutation({
-    mutationFn: (content: string) =>
-      messagesApi.send(
-        workspaceId,
-        channelId,
-        content,
-      ),
+    mutationFn: ({ content, file }: { content: string; file?: File }) =>
+      messagesApi.send(workspaceId, channelId, content, file),
 
-    // Runs after the POST succeeds
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["messages", workspaceId, channelId],
@@ -207,7 +209,7 @@ useEffect(() => {
   });
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    messageObserverRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
@@ -227,16 +229,12 @@ useEffect(() => {
       }
     );
 
-    const messagesElements = document.querySelectorAll("[data-message-id]");
-
-    messagesElements.forEach((message) => observer.observe(message));
-
     return () => {
-      observer.disconnect();
+      messageObserverRef.current?.disconnect();
+      messageObserverRef.current = null;
     };
-  }, [messagesResponse]);
-
-  
+  }, []);
+    
 
   if (isLoading) {
     return <div>Loading channel...</div>;
@@ -256,7 +254,9 @@ useEffect(() => {
       return;
     }
 
-    sendMessageMutation.mutate(trimmedContent);
+    sendMessageMutation.mutate({
+  content,
+});
   };
 
   return (
@@ -307,6 +307,11 @@ useEffect(() => {
                 <div
                   key={message.id}
                   data-message-id={message.id}
+                  ref={(element) => {
+                    if (element) {
+                      messageObserverRef.current?.observe(element);
+                    }
+                  }}
                   className="group flex gap-3"
                 >
                   {/* Avatar */}

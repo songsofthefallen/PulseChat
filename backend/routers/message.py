@@ -18,7 +18,7 @@ async def send_message( workspace_id: int, channel_id: int, content: str = Form(
 @router.get("/workspaces/{workspace_id}/channels/{channel_id}/messages", response_model=list[MessageResponse])
 def get_messages(workspace_id: int, channel_id: int, before_id: int | None = None, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
 
-    return MessageService.get_messages(workspace_id, channel_id, current_user.id, before_id, db)
+    return MessageService.get_messages(workspace_id, channel_id, current_user.id,before_id, db)
 
 @router.patch("/workspaces/{workspace_id}/channels/{channel_id}/messages/{message_id}", response_model=MessageResponse)
 def edit_message(workspace_id: int, channel_id: int, message_id: int, message: UpdateMessageRequest, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):

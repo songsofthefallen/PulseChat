@@ -17,9 +17,20 @@ export const messagesApi = {
     return response.data;
   },
 
-  send: ( workspaceId: number, channelId: number, content: string,) => 
-    apiClient.post<Message>(`/workspaces/${workspaceId}/channels/${channelId}/messages`, { content },
-    ),
+  send: (workspaceId: number, channelId: number, content: string, file?: File) => {
+    const formData = new FormData();
+
+    formData.append("content", content);
+
+    if (file) {
+      formData.append("file", file);
+    }
+
+    return apiClient.post<Message>(
+      `/workspaces/${workspaceId}/channels/${channelId}/messages`,
+      formData,
+    );
+  },
 
   markAsRead: (workspaceId: number, channelId: number, messageId: number) =>
     apiClient.post(
