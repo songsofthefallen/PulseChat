@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { channelsApi } from "@/api/channels";
 import { messagesApi } from "@/api/messages";
@@ -19,6 +19,9 @@ export default function ChannelPage() {
   const [readMessages, setReadMessages] = useState<MessageRead[]>([]);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const markedAsReadRef = useRef<Set<number>>(new Set());
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const initialScrollDoneRef = useRef(false);
+  const previousScrollHeightRef = useRef(0);
   const workspaceId = Number(params.workspace_id);
   const channelId = Number(params.channel_id);
   const { data: currentUser } = useQuery({
@@ -35,15 +38,27 @@ export default function ChannelPage() {
   }
 
   if (data.type === "message_read") {
-    setReadMessages((previous) => [
-      ...previous,
-      {
-        user_id: data.user_id,
-        message_id: data.message_id,
-        read_at: data.read_at,
-        username: data.username,
-      },
-    ]);
+    setReadMessages((previous) => {
+      const exists = previous.some(
+        (read) =>
+          read.user_id === data.user_id &&
+          read.message_id === data.message_id
+      );
+
+      if (exists) {
+        return previous;
+      }
+
+      return [
+        ...previous,
+        {
+          user_id: data.user_id,
+          message_id: data.message_id,
+          read_at: data.read_at,
+          username: data.username,
+        },
+      ];
+    });
   }
 
   if (data.type === "user_typing") {
@@ -109,11 +124,63 @@ export default function ChannelPage() {
     data: messagesResponse,
     isLoading: messagesLoading,
     error: messagesError,
-  } = useQuery({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["messages", workspaceId, channelId],
-    queryFn: () =>
-      messagesApi.listByChannel(workspaceId, channelId),
+    queryFn: ({ pageParam }) =>
+      messagesApi.listByChannel(workspaceId, channelId, pageParam),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.data.length === 0) {
+        return undefined;
+      }
+
+      return lastPage.data[lastPage.data.length - 1].id;
+    },
   });
+  const messages = messagesResponse?.pages.flatMap((page) => page.data).reverse() ?? [];
+
+  useEffect(() => {
+  const container = messagesContainerRef.current;
+
+  if (!container || messages.length === 0 || initialScrollDoneRef.current) {
+    return;
+  }
+
+  container.scrollTop = container.scrollHeight;
+  initialScrollDoneRef.current = true;
+}, [messages]);
+
+const handleMessagesScroll = () => {
+  const container = messagesContainerRef.current;
+
+  if (!container || !hasNextPage || isFetchingNextPage) {
+    return;
+  }
+
+  if (container.scrollTop <= 50) {
+    previousScrollHeightRef.current = container.scrollHeight;
+    fetchNextPage();
+  }
+};
+
+useEffect(() => {
+  const container = messagesContainerRef.current;
+
+  if (!container || previousScrollHeightRef.current === 0) {
+    return;
+  }
+
+  const newScrollHeight = container.scrollHeight;
+  const heightDifference =
+    newScrollHeight - previousScrollHeightRef.current;
+
+  container.scrollTop += heightDifference;
+
+  previousScrollHeightRef.current = 0;
+}, [messages]);
 
   // Sends a message to the backend
   const sendMessageMutation = useMutation({
@@ -140,15 +207,36 @@ export default function ChannelPage() {
   });
 
   useEffect(() => {
-  if (!messagesResponse?.data) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
 
-  messagesResponse.data.forEach((message) => {
-    if (markedAsReadRef.current.has(message.id)) return;
+          const messageId = Number(
+            (entry.target as HTMLElement).dataset.messageId
+          );
 
-    markedAsReadRef.current.add(message.id);
-    markAsReadMutation.mutate(message.id);
-  });
+          if (markedAsReadRef.current.has(messageId)) return;
+
+          markedAsReadRef.current.add(messageId);
+          markAsReadMutation.mutate(messageId);
+        });
+      },
+      {
+        threshold: 0.5,
+      }
+    );
+
+    const messagesElements = document.querySelectorAll("[data-message-id]");
+
+    messagesElements.forEach((message) => observer.observe(message));
+
+    return () => {
+      observer.disconnect();
+    };
   }, [messagesResponse]);
+
+  
 
   if (isLoading) {
     return <div>Loading channel...</div>;
@@ -158,8 +246,7 @@ export default function ChannelPage() {
     return <div>Unable to load channel.</div>;
   }
 
-  const channel = response?.data;
-  const messages = messagesResponse?.data ?? [];
+  const channel = response?.data;  
 
   const handleSendMessage = () => {
     const trimmedContent = content.trim();
@@ -195,7 +282,7 @@ export default function ChannelPage() {
       </header>
 
       {/* Messages */}
-      <main className="flex-1 overflow-y-auto">
+      <main ref={messagesContainerRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-4xl flex-col px-6 py-6">
 
           {messages.length === 0 ? (
@@ -219,6 +306,7 @@ export default function ChannelPage() {
               {messages.map((message) => (
                 <div
                   key={message.id}
+                  data-message-id={message.id}
                   className="group flex gap-3"
                 >
                   {/* Avatar */}

@@ -112,7 +112,7 @@ class MessageService:
         return message
 
     @staticmethod
-    def get_messages(workspace_id: int, channel_id: int, page: int, user_id: int, db: Session):
+    def get_messages(workspace_id: int,channel_id: int,user_id: int,before_id: int | None,db: Session):
         workspace = WorkspaceRepository.get_workspace(workspace_id, db)
 
         if workspace is None:
@@ -133,13 +133,9 @@ class MessageService:
         if view is None or not view.can_view:
             raise HTTPException(status_code=403, detail="User cannot view this channel")
 
-        if page < 1:
-            raise HTTPException(status_code=400, detail="Page must be greater than 0")
+        limit = settings.MESSAGES_PER_PAGE
 
-        mess_per_page = settings.MESSAGES_PER_PAGE
-        offset = (page - 1) * mess_per_page
-
-        messages = MessageRepository.get_messages(channel_id, mess_per_page, offset, db)
+        messages = MessageRepository.get_messages(channel_id, limit, before_id, db)
 
         return messages
 

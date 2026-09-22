@@ -4,10 +4,13 @@ import type { Message, MessageRead } from "@/types";
 
 
 export const messagesApi = {
-  listByChannel: (workspaceId: number, channelId: number) =>
-      apiClient.get<Message[]>(
-        `/workspaces/${workspaceId}/channels/${channelId}/messages`
-      ),
+  listByChannel: (workspaceId: number, channelId: number, beforeId?: number) =>
+    apiClient.get<Message[]>(
+      `/workspaces/${workspaceId}/channels/${channelId}/messages`,
+      {
+        params: beforeId ? { before_id: beforeId } : undefined,
+      }
+    ),
 
   getReadMessages: async (workspaceId: number,channelId: number) => {
     const response = await apiClient.get<MessageRead[]>(`/workspaces/${workspaceId}/channels/${channelId}/read`);

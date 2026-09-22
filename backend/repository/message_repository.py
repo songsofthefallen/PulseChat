@@ -12,11 +12,13 @@ class MessageRepository:
         return message
 
     @staticmethod
-    def get_messages(channel_id: int,limit: int,offset: int,db: Session):
-        return db.query(Message).options(
-            joinedload(Message.user)).filter(
-                Message.channel_id == channel_id).order_by(
-                    Message.created_at.desc()).offset(offset).limit(limit).all()
+    def get_messages(channel_id: int,limit: int,before_id: int | None,db: Session):
+        query = db.query(Message).options(joinedload(Message.user)).filter(Message.channel_id == channel_id)
+
+        if before_id is not None:
+            query = query.filter(Message.id < before_id)
+
+        return query.order_by(Message.id.desc()).limit(limit).all()
     @staticmethod
     def get_channel_message(channel_id: int, message_id, db):
         return db.query(Message).filter(Message.channel_id == channel_id, Message.id == message_id).first()
