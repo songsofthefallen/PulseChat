@@ -49,4 +49,14 @@ class ConnectionManager:
         except Exception:
             self.disconnect(user_id)
 
+    async def broadcast_to_all(self, message: dict):
+        for user_id in list(self.active_connections):
+            websocket = self.active_connections.get(user_id)
+
+            if websocket:
+                try:
+                    await websocket.send_json(message)
+                except Exception:
+                    self.disconnect(user_id)
+
 manager = ConnectionManager()

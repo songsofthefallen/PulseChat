@@ -5,7 +5,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { useParams } from "next/navigation";
 import { channelsApi } from "@/api/channels";
 import { messagesApi } from "@/api/messages";
-import { useWebSocket } from "@/hooks/use-websocket";
+import { useWebSocketContext } from "@/providers/websocket-provider";
 import { authApi } from "@/api/auth";
 import type { MessageRead } from "@/types";
 
@@ -29,69 +29,71 @@ export default function ChannelPage() {
     queryKey: ["auth", "me"],
     queryFn: authApi.me,
   });
-  const { send } = useWebSocket(channelId, (event) => {
-  const data = JSON.parse(event.data);
 
-  if (data.type === "new_message") {
-    send({
-    type: "message_delivered",
-    message_id: data.message_id,
-    channel_id: data.channel_id,
-  });
-    queryClient.invalidateQueries({
-      queryKey: ["messages", workspaceId, channelId],
-      
-    });
-  }
-  
+  const { send, subscribe } = useWebSocketContext();
 
-  if (data.type === "message_read") {
-    setReadMessages((previous) => {
-      const exists = previous.some(
-        (read) =>
-          read.user_id === data.user_id &&
-          read.message_id === data.message_id
-      );
+  useEffect(() => {
+  return subscribe(channelId, (data) => {
+    if (data.type === "new_message") {
+      send({
+        type: "message_delivered",
+        message_id: data.message_id,
+        channel_id: data.channel_id,
+      });
 
-      if (exists) {
-        return previous;
-      }
-
-      return [
-        ...previous,
-        {
-          user_id: data.user_id,
-          message_id: data.message_id,
-          read_at: data.read_at,
-          username: data.username,
-        },
-      ];
-    });
-  }
-
-  if (data.type === "message_delivered") {
-  console.log("MESSAGE DELIVERED:", data);
-}
-
-  if (data.type === "user_typing") {
-    if (!currentUser) {
-      return;
+      queryClient.invalidateQueries({
+        queryKey: ["messages", workspaceId, channelId],
+      });
     }
 
-  if (data.user_id !== currentUser.id) {
-    setTypingUserId(data.user_id);
-    setTypingUsername(data.username);
+    if (data.type === "message_read") {
+      setReadMessages((previous) => {
+        const exists = previous.some(
+          (read) =>
+            read.user_id === data.user_id &&
+            read.message_id === data.message_id
+        );
 
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
+        if (exists) {
+          return previous;
+        }
+
+        return [
+          ...previous,
+          {
+            user_id: data.user_id,
+            message_id: data.message_id,
+            read_at: data.read_at,
+            username: data.username,
+          },
+        ];
+      });
+    }
+
+    if (data.type === "message_delivered") {
+      console.log("MESSAGE DELIVERED:", data);
+    }
+
+    if (data.type === "user_typing") {
+      if (!currentUser) {
+        return;
       }
 
-      typingTimeoutRef.current = setTimeout(() => {
-        setTypingUserId(null);
+      if (data.user_id !== currentUser.id) {
+        setTypingUserId(data.user_id);
+        setTypingUsername(data.username);
+
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+
+        typingTimeoutRef.current = setTimeout(() => {
+          setTypingUserId(null);
         }, 1000);
       }
     }
   });
+}, [channelId, workspaceId, currentUser, queryClient, send, subscribe]);
 
   const { data: existingReadMessages } = useQuery({
     queryKey: ["message-reads", workspaceId, channelId],

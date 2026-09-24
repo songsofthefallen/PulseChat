@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { useUsers } from "@/hooks/useUsers";
 import { useUsersPresence } from "@/hooks/usePresence";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 import {
   Avatar,
@@ -31,9 +32,11 @@ const GROUPS: {
   { label: "Do Not Disturb", status: "dnd" },
   { label: "Offline", status: "offline" },
 ];
+const userIds = users.map((user) => user.id);
 
 export function MembersSidebar() {
   const [query, setQuery] = React.useState("");
+  
 
   // Get real users from the backend
   const {

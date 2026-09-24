@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 
 export function useWebSocket(
-  channelId: number,
   onMessage: (event: MessageEvent) => void
 ) {
   const wsRef = useRef<WebSocket | null>(null);
@@ -30,18 +29,12 @@ export function useWebSocket(
             return;
         }
 
-    console.log("WebSocket connected");
-
-
-        ws.send(
-            JSON.stringify({
-            type: "subscribe",
-            channel_id: channelId,
-            })
-        );
+        console.log("WebSocket connected");
+   
         };
 
         ws.onmessage = (event) => {
+            console.log("WS RECEIVED:", event.data);
         if (!cancelled) {
             onMessageRef.current(event);
         }
@@ -82,7 +75,7 @@ export function useWebSocket(
 
         wsRef.current = null;
     };
-    }, [channelId]);
+    }, []);
       const send = (data: object) => {
     const ws = wsRef.current;
 
@@ -93,7 +86,15 @@ export function useWebSocket(
         ws.send(JSON.stringify(data));
     };
 
+    const subscribe = (channelId: number) => {
+    send({
+        type: "subscribe",
+        channel_id: channelId,
+        });
+    };
+
     return {
         send,
+        subscribe
     };
     }

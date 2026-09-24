@@ -20,7 +20,7 @@ export default function ChannelPage() {
 
   useWebSocket((event) => {
   const data = JSON.parse(event.data);
-
+    
 });
 
   function handleSend(content: string) {
