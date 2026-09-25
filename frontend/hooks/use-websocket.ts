@@ -2,11 +2,13 @@
 
 import { useEffect, useRef } from "react";
 
+
 export function useWebSocket(
   onMessage: (event: MessageEvent) => void
 ) {
   const wsRef = useRef<WebSocket | null>(null);
   const onMessageRef = useRef(onMessage);
+  const pendingMessagesRef = useRef<object[]>([]);
 
   useEffect(() => {
   onMessageRef.current = onMessage;
@@ -30,11 +32,15 @@ export function useWebSocket(
         }
 
         console.log("WebSocket connected");
-   
+
+        pendingMessagesRef.current.forEach((message) => {
+            ws.send(JSON.stringify(message));
+        });
+
+        pendingMessagesRef.current = [];
         };
 
         ws.onmessage = (event) => {
-            console.log("WS RECEIVED:", event.data);
         if (!cancelled) {
             onMessageRef.current(event);
         }
@@ -76,14 +82,19 @@ export function useWebSocket(
         wsRef.current = null;
     };
     }, []);
-      const send = (data: object) => {
+    const send = (data: object) => {
     const ws = wsRef.current;
 
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      return;
+    if (!ws || ws.readyState === WebSocket.CONNECTING) {
+        pendingMessagesRef.current.push(data);
+        return;
     }
 
-        ws.send(JSON.stringify(data));
+    if (ws.readyState !== WebSocket.OPEN) {
+        return;
+    }
+
+    ws.send(JSON.stringify(data));
     };
 
     const subscribe = (channelId: number) => {

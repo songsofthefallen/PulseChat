@@ -10,7 +10,10 @@ class ConnectionManager:
         await websocket.accept()
         self.active_connections[user_id] = websocket
 
-    def disconnect(self, user_id: int):
+    def disconnect(self, user_id: int, websocket: WebSocket):
+        if self.active_connections.get(user_id) is not websocket:
+            return False
+
         self.active_connections.pop(user_id, None)
 
         for channel_id in list(self.rooms):
@@ -18,6 +21,8 @@ class ConnectionManager:
 
             if not self.rooms[channel_id]:
                 del self.rooms[channel_id]
+
+        return True
 
     def subscribe(self, user_id: int, channel_id: int):
         if channel_id not in self.rooms:
@@ -36,7 +41,7 @@ class ConnectionManager:
                 try:
                     await websocket.send_json(message)
                 except Exception:
-                    self.disconnect(user_id)
+                    self.disconnect(user_id, websocket)
 
     async def send_to_user(self, user_id: int, message: dict):
         websocket = self.active_connections.get(user_id)
@@ -47,7 +52,7 @@ class ConnectionManager:
         try:
             await websocket.send_json(message)
         except Exception:
-            self.disconnect(user_id)
+            self.disconnect(user_id, websocket)
 
     async def broadcast_to_all(self, message: dict):
         for user_id in list(self.active_connections):
@@ -57,6 +62,6 @@ class ConnectionManager:
                 try:
                     await websocket.send_json(message)
                 except Exception:
-                    self.disconnect(user_id)
+                    self.disconnect(user_id, websocket)
 
 manager = ConnectionManager()

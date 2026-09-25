@@ -37,6 +37,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
     try:
         while True:
             data = json.loads(await websocket.receive_text())
+            print("WS RECEIVED FROM CLIENT:", data)
 
             if data["type"] == "subscribe":
                 channel_id = data["channel_id"]
@@ -84,7 +85,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                 )
 
     except WebSocketDisconnect:
-        manager.disconnect(user.id)
+        manager.disconnect(user.id, websocket)
 
         await manager.broadcast_to_all({
             "type": "user_offline",

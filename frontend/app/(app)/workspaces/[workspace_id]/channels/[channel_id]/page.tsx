@@ -8,6 +8,7 @@ import { messagesApi } from "@/api/messages";
 import { useWebSocketContext } from "@/providers/websocket-provider";
 import { authApi } from "@/api/auth";
 import type { MessageRead } from "@/types";
+import { MembersSidebar } from "@/components/layout/members-sidebar";
 
 
 export default function ChannelPage() {
@@ -101,7 +102,7 @@ export default function ChannelPage() {
   });
 
   useEffect(() => {
-    if (!existingReadMessages) return;
+    if (!existingReadMessages || !currentUser) return;
 
     setReadMessages((previous) => {
       const existing = new Map(
@@ -110,11 +111,15 @@ export default function ChannelPage() {
 
       for (const read of existingReadMessages) {
         existing.set(`${read.user_id}-${read.message_id}`, read);
+
+        if (read.user_id === currentUser.id) {
+          markedAsReadRef.current.add(read.message_id);
+        }
       }
 
       return Array.from(existing.values());
     });
-  }, [existingReadMessages]);
+  }, [existingReadMessages, currentUser]);
 
   // Stores whatever the user is currently typing
   const [content, setContent] = useState("");
@@ -261,8 +266,9 @@ useEffect(() => {
 });
   };
 
-  return (
-    <div className="flex h-screen min-w-0 flex-1 flex-col bg-background">
+ return (
+  <div className="flex h-screen min-w-0 flex-1 bg-background">
+    <div className="flex min-w-0 flex-1 flex-col">
 
       {/* Channel header */}
       <header className="flex h-14 shrink-0 items-center border-b border-border px-6">
@@ -423,5 +429,9 @@ useEffect(() => {
       </footer>
 
     </div>
-  );
+
+    <MembersSidebar />
+
+  </div>
+);
 }

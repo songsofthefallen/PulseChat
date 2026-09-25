@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { useUsers } from "@/hooks/useUsers";
 import { useUsersPresence } from "@/hooks/usePresence";
-import { useWebSocket } from "@/hooks/use-websocket";
+import type { User } from "@/types";
 
 import {
   Avatar,
@@ -32,7 +32,6 @@ const GROUPS: {
   { label: "Do Not Disturb", status: "dnd" },
   { label: "Offline", status: "offline" },
 ];
-const userIds = users.map((user) => user.id);
 
 export function MembersSidebar() {
   const [query, setQuery] = React.useState("");
@@ -52,7 +51,6 @@ export function MembersSidebar() {
   const {
     data: presence = [],
   } = useUsersPresence(userIds);
-
   // Convert:
   // [
   //   { user_id: 1, status: "Online" },
@@ -73,7 +71,7 @@ export function MembersSidebar() {
   const getPresenceStatus = (userId: number): PresenceStatus => {
     const status = presenceMap.get(userId);
 
-    if (status === "Online") {
+    if (status === "online") {
       return "online";
     }
 
@@ -87,7 +85,7 @@ export function MembersSidebar() {
 
   if (isLoading) {
     return (
-      <aside className="hidden xl:flex h-full w-64 shrink-0 flex-col border-l border-border bg-surface-sunken/40">
+      <aside className="flex h-full w-64 shrink-0 flex-col border-l border-border bg-surface-sunken/40">
         <div className="p-3">
           <p className="text-xs text-muted-foreground">
             Loading members...
@@ -99,7 +97,7 @@ export function MembersSidebar() {
 
   if (error) {
     return (
-      <aside className="hidden xl:flex h-full w-64 shrink-0 flex-col border-l border-border bg-surface-sunken/40">
+      <aside className="flex h-full w-64 shrink-0 flex-col border-l border-border bg-surface-sunken/40">
         <div className="p-3">
           <p className="text-xs text-destructive">
             Failed to load members.
@@ -110,7 +108,7 @@ export function MembersSidebar() {
   }
 
   return (
-    <aside className="hidden xl:flex h-full w-64 shrink-0 flex-col border-l border-border bg-surface-sunken/40">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-l border-border bg-surface-sunken/40">
       {/* Search */}
       <div className="p-3">
         <div className="relative">
@@ -163,14 +161,7 @@ function MemberRow({
   member,
   status,
 }: {
-  member: {
-    id: number;
-    name: string;
-    handle: string;
-    avatar_url: string | null;
-    bio: string | null;
-    custom_status: string | null;
-  };
+  member: User;
   status: PresenceStatus;
 }) {
   return (
@@ -189,12 +180,12 @@ function MemberRow({
 
           <div className="min-w-0">
             <p className="truncate text-sm font-medium leading-tight">
-              {member.name}
+              {member.username}
             </p>
 
-            {member.custom_status && (
+            {member.customStatus && (
               <p className="truncate text-xs text-muted-foreground leading-tight">
-                {member.custom_status}
+                {member.customStatus }
               </p>
             )}
           </div>
@@ -218,7 +209,7 @@ function MemberRow({
 
           <div>
             <p className="font-display font-semibold">
-              {member.name}
+              {member.username}
             </p>
 
             <p className="text-xs text-muted-foreground">
@@ -227,9 +218,9 @@ function MemberRow({
           </div>
         </div>
 
-        {member.custom_status && (
+        {member.customStatus  && (
           <p className="mt-3 rounded-md bg-surface-sunken px-2 py-1.5 text-xs">
-            {member.custom_status}
+            {member.customStatus }
           </p>
         )}
       </PopoverContent>

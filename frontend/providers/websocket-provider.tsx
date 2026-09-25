@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useRef } from "react";
 import { useWebSocket } from "@/hooks/use-websocket";
 
@@ -21,11 +22,32 @@ export function WebSocketProvider({
   const listenersRef = useRef(
     new Map<number, Set<(data: any) => void>>()
   );
-
+  
+  const queryClient = useQueryClient();
   const { send } = useWebSocket((event) => {
     const data = JSON.parse(event.data);
 
     console.log("GLOBAL WS:", data);
+
+    if (data.type === "user_online" || data.type === "user_offline") {
+  queryClient.setQueriesData(
+    { queryKey: ["presence"] },
+    (previous: any) => {
+      if (!previous) {
+        return previous;
+      }
+
+      return previous.map((item: any) =>
+        item.user_id === data.user_id
+          ? {
+              ...item,
+              status: data.type === "user_online" ? "online" : "offline",
+            }
+          : item
+      );
+    }
+  );
+}
 
     if (data.channel_id) {
       const listeners = listenersRef.current.get(data.channel_id);
