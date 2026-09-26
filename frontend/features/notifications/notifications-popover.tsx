@@ -9,9 +9,19 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { mockNotifications } from "@/constants/mock-data";
 import { cn, formatTimestamp } from "@/lib/utils";
-import type { NotificationItem } from "@/types";
+import {
+  useNotifications,
+  useUnreadNotificationCount,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from "@/hooks/use-notifications";
+import { NotificationItem } from "@/types";
+import {
+  getNotificationTitle,
+  getNotificationBody,
+} from "@/features/notifications/notification-utils";
+
 
 const ICONS: Record<NotificationItem["type"], React.ReactNode> = {
   mention: <AtSign className="size-4" />,
@@ -19,11 +29,17 @@ const ICONS: Record<NotificationItem["type"], React.ReactNode> = {
   reaction: <Smile className="size-4" />,
   invite: <UserPlus className="size-4" />,
   system: <Bell className="size-4" />,
+  message: <MessageSquare className="size-4" />,
 };
 
 export function NotificationsPopover() {
-  const [notifications, setNotifications] = React.useState(mockNotifications);
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const { data: notifications = [] } = useNotifications();
+  const { data: unreadData } = useUnreadNotificationCount();
+
+  const markNotificationRead = useMarkNotificationRead();
+  const markAllNotificationsRead = useMarkAllNotificationsRead();
+
+  const unreadCount = unreadData?.count ?? 0;
 
   return (
     <Popover>
@@ -45,9 +61,7 @@ export function NotificationsPopover() {
           <p className="font-display font-semibold text-sm">Notifications</p>
           <button
             className="text-xs text-accent hover:underline"
-            onClick={() =>
-              setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-            }
+              onClick={() => markAllNotificationsRead.mutate()}
           >
             Mark all read
           </button>
@@ -59,31 +73,29 @@ export function NotificationsPopover() {
             notifications.map((n) => (
               <button
                 key={n.id}
-                onClick={() =>
-                  setNotifications((prev) =>
-                    prev.map((item) =>
-                      item.id === n.id ? { ...item, read: true } : item
-                    )
-                  )
-                }
+                  onClick={() => {
+                    if (!n.is_read) {
+                      markNotificationRead.mutate(n.id);
+                    }
+                  }}
                 className={cn(
                   "flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left last:border-0 hover:bg-surface-sunken",
-                  !n.read && "bg-accent-soft/40"
+                  !n.is_read && "bg-accent-soft/40"
                 )}
               >
                 <span className="mt-0.5 text-accent">{ICONS[n.type]}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium leading-snug">
-                    {n.title}
+                    {n.actor_username ?? getNotificationTitle(n.type)}
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">
-                    {n.body}
+                    {n.message_content ?? getNotificationBody(n.type)}
                   </span>
                   <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                    {formatTimestamp(n.createdAt)}
+                    {formatTimestamp(n.created_at)}
                   </span>
                 </span>
-                {!n.read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-accent" />}
+                {!n.is_read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-accent" />}
               </button>
             ))
           )}

@@ -17,6 +17,11 @@ class UserRepository:
         return db.query(User).filter(User.id == id).first()
 
     @staticmethod
+    def find_user_by_handle(handle: str, db: Session):
+        return db.query(User).filter(User.handle == handle).first()
+
+
+    @staticmethod
     def username_exist(data: UpdateProfileRequest,current_user: User, db: Session):
         return  db.query(User).filter(User.username == data.username, User.id != current_user.id).first()
 

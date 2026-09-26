@@ -11,6 +11,7 @@ import {
   WorkspaceList,
 } from "@/features/dashboard/dashboard-widgets";
 import { authApi } from "@/api/auth";
+import { NotificationList } from "@/features/notifications/notification-list";
 
 export default function DashboardPage() {
   const {
@@ -91,6 +92,14 @@ export default function DashboardPage() {
             </h2>
 
             <ActivityFeed />
+          </section>
+
+          <section>
+            <h2 className="mb-3 text-lg font-semibold">
+              Notifications
+            </h2>
+
+            <NotificationList />
           </section>
         </div>
       </div>

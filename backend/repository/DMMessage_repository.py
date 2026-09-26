@@ -20,4 +20,5 @@ class DMMessageRepository:
     def get_direct_message(conversation_id: int, message_id: int, db: Session):
         return db.query(DMMessage).filter(DMMessage.conversation_id == conversation_id, DMMessage.id == message_id).first()
 
+
     

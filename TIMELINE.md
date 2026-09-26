@@ -115,7 +115,7 @@ PulseChat is a real-time team chat application (Discord/Slack-style) with a Next
   - Message delivery confirmation
   - Read receipts
 
-- [ ] **Presence System**
+- ✅ **Presence System**
   - User online/offline status
   - Last seen timestamp
   - Active typing users list

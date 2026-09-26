@@ -1,18 +1,19 @@
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
-from models import User
 from repository.DMMessage_repository import DMMessageRepository
 from repository.DMConversation_repository import DMConversationRepository
 from repository.message_repository import MessageRepository
 from config import settings
 import uuid
 import os
+from websocket.connection_manager import manager
+from services.notification_service import NotificationService
 
 
 class DMMessageService:
 
     @staticmethod
-    def create_direct_message(conversation_id: int, content: str, file: UploadFile | None, user_id: int, db: Session):
+    async def create_direct_message(conversation_id: int, content: str, file: UploadFile | None, user_id: int, db: Session):
         conversation = DMConversationRepository.get_conversation(conversation_id, db)
 
         if conversation is None:
@@ -22,6 +23,10 @@ class DMMessageService:
 
         if member is None:
             raise HTTPException(status_code=403, detail="User is not a member of conversation")
+
+        participants = DMConversationRepository.get_conversation_participants(conversation_id, db)
+
+        recipients = [ participant.user_id for participant in participants if participant.user_id != user_id]
 
         file_details = None
 
@@ -76,6 +81,19 @@ class DMMessageService:
                     db=db
                 )
 
+            notifications = []
+
+            for recipient_id in recipients:
+                notification = NotificationService.notify_message(
+                    recipient_id=recipient_id,
+                    actor_id=user_id,
+                    conversation_id=conversation_id,
+                    dm_message_id=message.id,
+                    db=db
+                )
+
+                notifications.append(notification)
+
             db.commit()
             db.refresh(message)
 
@@ -86,6 +104,19 @@ class DMMessageService:
                 os.remove(file_details)
 
             raise
+
+        for notification in notifications:
+            await manager.send_to_user(
+                notification.recipient_id,
+                {
+                    "type": "notification",
+                    "notification_type": notification.type,
+                    "notification_id": notification.id,
+                    "actor_id": notification.actor_id,
+                    "conversation_id": notification.conversation_id,
+                    "dm_message_id": notification.dm_message_id
+                }
+            )
 
         return message
 

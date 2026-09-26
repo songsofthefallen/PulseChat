@@ -60,4 +60,8 @@ class DMConversationRepository:
     @staticmethod
     def get_conversations(user_id: int, db: Session):
         return db.query(DMConversation).join(DMConversation.participants).filter(DMParticipant.user_id == user_id).options(joinedload(DMConversation.participants).joinedload(DMParticipant.user)).order_by(DMConversation.created_at.desc()).all()
-    
+
+
+    @staticmethod
+    def get_conversation_participants(conversation_id: int, db: Session):
+        return db.query(DMParticipant).filter(DMParticipant.conversation_id == conversation_id).all()

@@ -18,7 +18,7 @@ class AuthService:
     @staticmethod
     def username_already_exist(username: str, db: Session):
         db_user = UserRepository.get_by_username(username, db)
-
+ 
         if db_user:
             raise HTTPException(status_code = 409, detail="Username is already taken")
 
@@ -38,13 +38,33 @@ class AuthService:
 
         return db_user
     
+    @staticmethod
     def find_user_by_id(id: int, db: Session):
         db_user = UserRepository.get_by_id(id, db)
 
         if not db_user:
             raise HTTPException(status_code=404, detail="User Not Found")
 
-        return db_user   
+        return db_user
+
+    @staticmethod
+    def find_user_by_handle(handle: str, db: Session):
+        return UserRepository.find_user_by_handle(handle, db)
+
+
+
+    @staticmethod
+    def generate_handle(username: str, db: Session):
+        base_handle = username.strip().lower().replace(" ", "_")
+        handle = base_handle
+        number = 2
+
+        while AuthService.find_user_by_handle(handle, db):
+            handle = f"{base_handle}_{number}"
+            number += 1
+
+        return handle
+
 
 
     @staticmethod
@@ -55,20 +75,18 @@ class AuthService:
         AuthService.email_already_exist(user.email, db)
 
         hashed_password = HashService.hash_password(user.password)
+        handle = AuthService.generate_handle(user.username, db)
 
-        save_user = User(username = user.username, email = user.email, hashed_password=hashed_password)
+        save_user = User(username = user.username, email = user.email, hashed_password=hashed_password, handle=handle)
 
         db.add(save_user)
         try:
             db.commit()
             db.refresh(save_user)
-        except IntegrityError:
+        except IntegrityError as e:
             db.rollback()
-
-            raise HTTPException(
-                status_code=409,
-                detail="Username or email already exists"
-            )
+            print("INTEGRITY ERROR:", e)
+            raise
 
         return {
             "message": "User registered successfully",

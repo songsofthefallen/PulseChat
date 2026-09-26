@@ -10,9 +10,9 @@ from services.DMMessage_service import DMMessageService
 router = APIRouter()
 
 @router.post("/dms/{conversation_id}/messages", response_model=DMMessageResponse)
-def create_direct_message(conversation_id: int, content: str = Form(), file: UploadFile | None = File(None), current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
+async def create_direct_message(conversation_id: int, content: str = Form(), file: UploadFile | None = File(None), current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
 
-    return DMMessageService.create_direct_message(conversation_id, content, file, current_user.id, db)
+    return await DMMessageService.create_direct_message(conversation_id, content, file, current_user.id, db)
 
 @router.get("/dms/{conversation_id}/messages", response_model=list[DMMessageResponse])
 def get_direct_messages(conversation_id: int, page: int = 1, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):

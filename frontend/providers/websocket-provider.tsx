@@ -49,6 +49,16 @@ export function WebSocketProvider({
   );
 }
 
+  if (data.type === "notification") {
+  queryClient.invalidateQueries({
+    queryKey: ["notifications"],
+  });
+
+  queryClient.invalidateQueries({
+    queryKey: ["notifications", "unread-count"],
+  });
+}
+
     if (data.channel_id) {
       const listeners = listenersRef.current.get(data.channel_id);
 

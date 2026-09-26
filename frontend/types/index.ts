@@ -93,12 +93,23 @@ export interface PinnedChannel {
 }
 
 export interface NotificationItem {
-  id: string;
-  type: "mention" | "reply" | "reaction" | "system" | "invite";
-  title: string;
-  body: string;
-  createdAt: string;
-  read: boolean;
+  id: number;
+  recipient_id: number;
+  actor_id: number;
+  type: "message" | "mention" | "reply" | "reaction" | "invite" | "system";
+  workspace_id: number | null;
+  channel_id: number | null;
+  conversation_id: number | null;
+  message_id: number | null;
+  dm_message_id: number | null;
+  is_read: boolean;
+  created_at: string;
+  actor_username: string | null;
+  message_content: string | null;
+}
+
+export interface NotificationUnreadCount {
+  count: number;
 }
 
 export interface SearchResult {

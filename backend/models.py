@@ -183,3 +183,22 @@ class DMMessage(Base):
 
     user = relationship("User")
     attachments = relationship("MessageAttachment", back_populates="dm_message", cascade="all, delete-orphan")
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True)
+
+    recipient_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    actor_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    type = Column(String(50), nullable=False)
+
+    workspace_id = Column(Integer, ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=True)
+    channel_id = Column(Integer, ForeignKey("channels.id", ondelete="CASCADE"), nullable=True)
+    conversation_id = Column(Integer, ForeignKey("dm_conversations.id", ondelete="CASCADE"), nullable=True)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), nullable=True)
+    dm_message_id = Column(Integer, ForeignKey("dm_messages.id", ondelete="CASCADE"), nullable=True)
+
+    is_read = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))

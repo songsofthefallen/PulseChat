@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from typing import Literal
 from datetime import datetime
+from enum import Enum
 
 class RegisterUser(BaseModel):
     username: str
@@ -167,6 +168,28 @@ class DMMessageResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class NotificationResponse(BaseModel):
+    id: int
+    recipient_id: int
+    actor_id: int
+    type: NotificationType
+    workspace_id: int | None = None
+    channel_id: int | None = None
+    conversation_id: int | None = None
+    message_id: int | None = None
+    dm_message_id: int | None = None
+    is_read: bool
+    created_at: datetime
+    actor_username: str | None = None
+    message_content: str | None = None
 
+    model_config = ConfigDict(from_attributes=True)
 
+class NotificationType(str, Enum):
+    MESSAGE = "message"
+    MENTION = "mention"
+    REPLY = "reply"
+    REACTION = "reaction"
+    INVITE = "invite"
+    SYSTEM = "system"
 
