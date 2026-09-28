@@ -123,3 +123,30 @@ export interface Paginated<T> {
   items: T[];
   nextCursor?: string;
 }
+
+
+export interface DMMessage {
+    id: number;
+    content: string;
+    created_at: string;
+    user: {
+        id: number;
+        username: string;
+    };
+    attachments: any[];
+};
+
+export interface DMParticipant {
+  conversation_id: number;
+  user_id: number;
+  user: {
+    id: number;
+    username: string;
+  };
+}
+
+export interface DMConversation {
+  id: number;
+  created_at: string;
+  participants: DMParticipant[];
+}

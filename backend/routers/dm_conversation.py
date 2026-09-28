@@ -19,5 +19,10 @@ def get_conversations(current_user: User = Depends(AuthService.get_current_user)
 
     return DMConversationService.get_conversations(current_user.id, db)
 
+@router.get("/dms/{conversation_id}", response_model=DMConversationResponse)
+def get_conversation(conversation_id: int, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
+
+    return DMConversationService.get_conversation(conversation_id, current_user.id, db)
+
 
 

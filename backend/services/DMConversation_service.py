@@ -76,6 +76,22 @@ class DMConversationService:
     def get_conversations(user_id: int, db: Session):
         return DMConversationRepository.get_conversations(user_id, db)
 
+    @staticmethod
+    def get_conversation(conversation_id: int, user_id: int, db: Session):
+        conversation = DMConversationRepository.get_conversation(
+            conversation_id,
+            user_id,
+            db
+        )
+
+        if conversation is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Conversation not found"
+            )
+
+        return conversation
+
          
         
 

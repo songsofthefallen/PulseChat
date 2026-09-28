@@ -10,6 +10,10 @@ type WebSocketContextValue = {
     channelId: number,
     onMessage: (data: any) => void
   ) => () => void;
+  subscribeDM: (
+    conversationId: number,
+    onMessage: (data: any) => void
+  ) => () => void;
 };
 
 const WebSocketContext = createContext<WebSocketContextValue | null>(null);
@@ -22,6 +26,9 @@ export function WebSocketProvider({
   const listenersRef = useRef(
     new Map<number, Set<(data: any) => void>>()
   );
+  const dmListenersRef = useRef(
+  new Map<number, Set<(data: any) => void>>()
+);
   
   const queryClient = useQueryClient();
   const { send } = useWebSocket((event) => {
@@ -50,22 +57,33 @@ export function WebSocketProvider({
 }
 
   if (data.type === "notification") {
-  queryClient.invalidateQueries({
-    queryKey: ["notifications"],
-  });
+    queryClient.invalidateQueries({
+      queryKey: ["notifications"],
+    });
 
   queryClient.invalidateQueries({
     queryKey: ["notifications", "unread-count"],
-  });
-}
+    });
+  }
 
-    if (data.channel_id) {
-      const listeners = listenersRef.current.get(data.channel_id);
+  if (data.channel_id) {
+    const listeners = listenersRef.current.get(data.channel_id);
 
-      listeners?.forEach((listener) => {
-        listener(data);
-      });
-    }
+    listeners?.forEach((listener) => {
+      listener(data);
+    });
+  }
+
+  if (data.conversation_id) {
+    const listeners = dmListenersRef.current.get(
+      data.conversation_id
+    );
+
+    listeners?.forEach((listener) => {
+      listener(data);
+    });
+  }
+
   });
 
   const subscribe = (
@@ -98,8 +116,38 @@ export function WebSocketProvider({
     };
   };
 
+  const subscribeDM = (
+  conversationId: number,
+  onMessage: (data: any) => void
+) => {
+  if (!dmListenersRef.current.has(conversationId)) {
+    dmListenersRef.current.set(conversationId, new Set());
+
+    send({
+      type: "subscribe_dm",
+      conversation_id: conversationId,
+    });
+  }
+
+  dmListenersRef.current.get(conversationId)!.add(onMessage);
+
+  return () => {
+    const listeners = dmListenersRef.current.get(conversationId);
+
+    if (!listeners) {
+      return;
+    }
+
+    listeners.delete(onMessage);
+
+    if (listeners.size === 0) {
+      dmListenersRef.current.delete(conversationId);
+    }
+  };
+};
+
   return (
-    <WebSocketContext.Provider value={{ send, subscribe }}>
+    <WebSocketContext.Provider value={{ send, subscribe, subscribeDM }}>
       {children}
     </WebSocketContext.Provider>
   );

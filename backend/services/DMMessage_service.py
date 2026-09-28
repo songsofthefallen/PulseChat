@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from repository.DMMessage_repository import DMMessageRepository
 from repository.DMConversation_repository import DMConversationRepository
 from repository.message_repository import MessageRepository
+from models import User
 from config import settings
 import uuid
 import os
@@ -13,20 +14,20 @@ from services.notification_service import NotificationService
 class DMMessageService:
 
     @staticmethod
-    async def create_direct_message(conversation_id: int, content: str, file: UploadFile | None, user_id: int, db: Session):
-        conversation = DMConversationRepository.get_conversation(conversation_id, db)
+    async def create_direct_message(conversation_id: int, content: str, file: UploadFile | None, current_user: User, db: Session):
+        conversation = DMConversationRepository.get_conversation(conversation_id, current_user.id, db)
 
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found")
 
-        member = DMConversationRepository.get_conversation_member(conversation_id, user_id, db)
+        member = DMConversationRepository.get_conversation_member(conversation_id, current_user.id, db)
 
         if member is None:
             raise HTTPException(status_code=403, detail="User is not a member of conversation")
 
         participants = DMConversationRepository.get_conversation_participants(conversation_id, db)
 
-        recipients = [ participant.user_id for participant in participants if participant.user_id != user_id]
+        recipients = [ participant.user_id for participant in participants if participant.user_id != current_user.id]
 
         file_details = None
 
@@ -69,7 +70,7 @@ class DMMessageService:
                 file_name = file.filename
                 file_type = file.content_type
 
-            message = DMMessageRepository.create_direct_message(conversation_id, content, user_id, db)
+            message = DMMessageRepository.create_direct_message(conversation_id, content, current_user.id, db)
 
             if file:
                 MessageRepository.create_attachment(
@@ -86,7 +87,7 @@ class DMMessageService:
             for recipient_id in recipients:
                 notification = NotificationService.notify_message(
                     recipient_id=recipient_id,
-                    actor_id=user_id,
+                    actor_id=current_user.id,
                     conversation_id=conversation_id,
                     dm_message_id=message.id,
                     db=db
@@ -118,11 +119,24 @@ class DMMessageService:
                 }
             )
 
+        await manager.broadcast_to_dm(
+            conversation_id,
+            {
+                "type": "new_dm_message",
+                "conversation_id": conversation_id,
+                "message_id": message.id,
+                "user_id": message.user_id,
+                "username": current_user.username,
+                "content": message.content,
+                "created_at": message.created_at.isoformat(),
+            }
+        )
+
         return message
 
     @staticmethod
-    def get_direct_messages(conversation_id: int, page: int, user_id: int, db: Session):
-        conversation = DMConversationRepository.get_conversation(conversation_id, db)
+    def get_direct_messages(conversation_id: int, before_id: int | None, user_id: int, db: Session):
+        conversation = DMConversationRepository.get_conversation(conversation_id, user_id, db)
 
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found")
@@ -132,19 +146,15 @@ class DMMessageService:
         if member is None:
             raise HTTPException(status_code=403, detail="User is not a member of conversation")
 
-        if page < 1:
-            raise HTTPException(status_code=400, detail="Page must be greater than 0")
+        limit = settings.MESSAGES_PER_PAGE
 
-        mess_per_page = settings.MESSAGES_PER_PAGE
-        offset = (page - 1) * mess_per_page
-
-        messages = DMMessageRepository.get_direct_messages(conversation_id, mess_per_page, offset, db)
+        messages = DMMessageRepository.get_direct_messages(conversation_id, limit, before_id, db)
 
         return messages
 
     @staticmethod
     def edit_direct_message(conversation_id: int, message_id: int, content: str, user_id: int, db: Session):
-        conversation = DMConversationRepository.get_conversation(conversation_id, db)
+        conversation = DMConversationRepository.get_conversation(conversation_id, user_id, db)
 
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found")
@@ -175,7 +185,7 @@ class DMMessageService:
 
     @staticmethod
     def delete_direct_message(conversation_id: int, message_id: int, user_id: int, db: Session):
-        conversation = DMConversationRepository.get_conversation(conversation_id, db)
+        conversation = DMConversationRepository.get_conversation(conversation_id, user_id, db)
 
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found")

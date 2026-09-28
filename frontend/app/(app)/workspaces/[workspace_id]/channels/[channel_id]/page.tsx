@@ -156,45 +156,56 @@ export default function ChannelPage() {
   });
   const messages = messagesResponse?.pages.flatMap((page) => page.data).reverse() ?? [];
 
+    useEffect(() => {
+        const container = messagesContainerRef.current;
+
+        if (
+            !container ||
+            !hasNextPage ||
+            isFetchingNextPage ||
+            messages.length === 0
+        ) {
+            return;
+        }
+
+        if (container.scrollHeight <= container.clientHeight) {
+            previousScrollHeightRef.current = container.scrollHeight;
+            fetchNextPage();
+        }
+    }, [
+        messages,
+        hasNextPage,
+        isFetchingNextPage,
+        fetchNextPage,
+    ]);
+
+  const handleMessagesScroll = () => {
+    const container = messagesContainerRef.current;
+
+    if (!container || !hasNextPage || isFetchingNextPage) {
+      return;
+    }
+
+    if (container.scrollTop <= 50) {
+      previousScrollHeightRef.current = container.scrollHeight;
+      fetchNextPage();
+    }
+  };
+
   useEffect(() => {
-  const container = messagesContainerRef.current;
+      const container = messagesContainerRef.current;
 
-  if (!container || messages.length === 0 || initialScrollDoneRef.current) {
-    return;
-  }
+      if (!container || messages.length === 0 || hasNextPage && container.scrollHeight <= container.clientHeight) {
+          return;
+      }
 
-  container.scrollTop = container.scrollHeight;
-  initialScrollDoneRef.current = true;
-}, [messages]);
+      if (initialScrollDoneRef.current) {
+          return;
+      }
 
-const handleMessagesScroll = () => {
-  const container = messagesContainerRef.current;
-
-  if (!container || !hasNextPage || isFetchingNextPage) {
-    return;
-  }
-
-  if (container.scrollTop <= 50) {
-    previousScrollHeightRef.current = container.scrollHeight;
-    fetchNextPage();
-  }
-};
-
-useEffect(() => {
-  const container = messagesContainerRef.current;
-
-  if (!container || previousScrollHeightRef.current === 0) {
-    return;
-  }
-
-  const newScrollHeight = container.scrollHeight;
-  const heightDifference =
-    newScrollHeight - previousScrollHeightRef.current;
-
-  container.scrollTop += heightDifference;
-
-  previousScrollHeightRef.current = 0;
-}, [messages]);
+      container.scrollTop = container.scrollHeight;
+      initialScrollDoneRef.current = true;
+  }, [messages, hasNextPage]);
 
   // Sends a message to the backend
   const sendMessageMutation = useMutation({

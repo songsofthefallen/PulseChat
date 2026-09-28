@@ -4,7 +4,8 @@ class ConnectionManager:
 
     def __init__(self):
         self.active_connections: dict[int, WebSocket] = {}    
-        self.rooms: dict[int, set[int]] = {}      
+        self.rooms: dict[int, set[int]] = {}
+        self.dm_rooms: dict[int, set[int]] = {}
 
     async def connect(self, user_id: int, websocket: WebSocket):
         await websocket.accept()
@@ -22,6 +23,12 @@ class ConnectionManager:
             if not self.rooms[channel_id]:
                 del self.rooms[channel_id]
 
+        for conversation_id in list(self.dm_rooms):
+            self.dm_rooms[conversation_id].discard(user_id)
+
+            if not self.dm_rooms[conversation_id]:
+                del self.dm_rooms[conversation_id]
+
         return True
 
     def subscribe(self, user_id: int, channel_id: int):
@@ -30,11 +37,30 @@ class ConnectionManager:
 
         self.rooms[channel_id].add(user_id)
 
+    def subscribe_dm(self, user_id: int, conversation_id: int):
+        if conversation_id not in self.dm_rooms:
+            self.dm_rooms[conversation_id] = set()
+
+        self.dm_rooms[conversation_id].add(user_id)
+
     async def broadcast_to_room(self, channel_id: int, message: dict):
         if channel_id not in self.rooms:
             return
 
         for user_id in list(self.rooms[channel_id]):
+            websocket = self.active_connections.get(user_id)
+
+            if websocket:
+                try:
+                    await websocket.send_json(message)
+                except Exception:
+                    self.disconnect(user_id, websocket)
+
+    async def broadcast_to_dm(self, conversation_id: int, message: dict):
+        if conversation_id not in self.dm_rooms:
+            return
+
+        for user_id in list(self.dm_rooms[conversation_id]):
             websocket = self.active_connections.get(user_id)
 
             if websocket:

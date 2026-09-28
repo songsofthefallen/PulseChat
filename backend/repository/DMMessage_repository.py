@@ -13,9 +13,14 @@ class DMMessageRepository:
         return message
 
     @staticmethod
-    def get_direct_messages(conversation_id: int, mess_per_page: int, offset: int, db: Session):
-        return db.query(DMMessage).options(joinedload(DMMessage.user)).filter(DMMessage.conversation_id == conversation_id).options(joinedload(DMMessage.user), joinedload(DMMessage.attachments)).order_by(DMMessage.created_at.desc()).offset(offset).limit(mess_per_page).all()
-    
+    def get_direct_messages(conversation_id: int, limit: int, before_id: int, db: Session):
+        query = db.query(DMMessage).options(joinedload(DMMessage.user)).filter(DMMessage.conversation_id == conversation_id).options(joinedload(DMMessage.user), joinedload(DMMessage.attachments))
+
+        if before_id is not None:
+            query = query.filter(DMMessage.id < before_id)
+
+        return query.order_by(DMMessage.id.desc()).limit(limit).all()
+
     @staticmethod
     def get_direct_message(conversation_id: int, message_id: int, db: Session):
         return db.query(DMMessage).filter(DMMessage.conversation_id == conversation_id, DMMessage.id == message_id).first()

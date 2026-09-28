@@ -4,11 +4,11 @@ from sqlalchemy.orm import Session
 from database import get_db
 from services.auth_service import AuthService
 import json
-from repository.message_repository import MessageRepository
-from models import Message
 import redis
 from dependencies import Dependencies
 from services.presence_service import PresenceService
+from websocket.channel_handler import handle_channel_event
+from websocket.dm_handler import handle_dm_event
 
 router = APIRouter()
 
@@ -37,58 +37,25 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
     try:
         while True:
             data = json.loads(await websocket.receive_text())
+
+            handled = await handle_channel_event(
+                data,
+                user,
+                websocket,
+                db
+            )
+
+            if not handled:
+                await handle_dm_event(data, user, db)
+
             print("WS RECEIVED FROM CLIENT:", data)
 
-            if data["type"] == "subscribe":
-                channel_id = data["channel_id"]
-
-                manager.subscribe(
-                    user.id,
-                    channel_id
-                )
-
-            elif data["type"] == "typing":
-                channel_id = data["channel_id"]
-
-                await manager.broadcast_to_room(
-                    channel_id,
-                    {
-                        "type": "user_typing",
-                        "channel_id": channel_id,
-                        "user_id": user.id,
-                        "username": user.username
-                    }
-                )
-
-            elif data["type"] == "message_delivered":
-
-                db.rollback()
-
-                message = MessageRepository.get_channel_message(
-                    data["channel_id"],
-                    data["message_id"],
-                    db
-                )
-
-                message_test = db.query(Message).filter(
-                    Message.id == data["message_id"]
-                ).first()
-
-                await manager.send_to_user(
-                    message.user_id,
-                    {
-                        "type": "message_delivered",
-                        "message_id": data["message_id"],
-                        "channel_id": data["channel_id"],
-                        "user_id": user.id
-                    }
-                )
-
     except WebSocketDisconnect:
-        manager.disconnect(user.id, websocket)
+        was_active = manager.disconnect(user.id, websocket)
 
-        await manager.broadcast_to_all({
-            "type": "user_offline",
-            "user_id": user.id,
-            "username": user.username
-        })
+        if was_active:
+            await manager.broadcast_to_all({
+                "type": "user_offline",
+                "user_id": user.id,
+                "username": user.username
+            })

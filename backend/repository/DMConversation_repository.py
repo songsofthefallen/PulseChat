@@ -49,10 +49,9 @@ class DMConversationRepository:
         )
 
     @staticmethod
-    def get_conversation(conversation_id: int, db: Session):
-        return db.query(DMConversation).filter(DMConversation.id == conversation_id).first()
-
-
+    def get_conversation(conversation_id: int, user_id: int, db: Session):
+        return db.query(DMConversation).join(DMParticipant).filter(DMConversation.id == conversation_id,DMParticipant.user_id == user_id).options(joinedload(DMConversation.participants).joinedload(DMParticipant.user)).first()
+        
     @staticmethod
     def get_conversation_member(conversation_id: int, user_id: int, db: Session):
         return db.query(DMParticipant).filter(DMParticipant.conversation_id == conversation_id, DMParticipant.user_id == user_id).first()
