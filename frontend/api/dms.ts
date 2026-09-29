@@ -1,6 +1,12 @@
 import { apiClient } from "./client";
+import { DMConversation }from "@/types"
 
 export const dmsApi = {
+    listOfConversations: async () => {
+    const response = await apiClient.get<DMConversation[]>("/dms");
+    return response.data;
+  },
+
   getConversation: async (conversationId: number) => {
     const response = await apiClient.get(
       `/dms/${conversationId}`

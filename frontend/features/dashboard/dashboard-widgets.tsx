@@ -1,12 +1,8 @@
 import Link from "next/link";
-import { Hash, Pin, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, PresenceDot } from "@/components/ui/avatar";
-import { mockChannels, mockMessages, mockUsers } from "@/constants/mock-data";
-import { cn, formatTimestamp, initials } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { dashboardApi } from "@/api/dashboard";
+import { dmsApi } from "@/api/dms";
 
 export function WorkspaceList() {
   const {
@@ -56,151 +52,70 @@ export function WorkspaceList() {
   );
 }
 
-export function RecentConversations() {
+export function ConversationList() {
   const {
-    data: conversations,
+    data: conversations = [],
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["dashboard", "recent-conversations"],
-    queryFn: dashboardApi.getRecentConversations,
+    queryKey: ["dm-conversations"],
+    queryFn: dmsApi.listOfConversations,
   });
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading...</p>;
+    return <p>Loading direct messages...</p>;
   }
 
   if (error) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Unable to load recent conversations.
-      </p>
-    );
+    return <p>Unable to load direct messages.</p>;
   }
 
-  if (!conversations || conversations.length === 0) {
+  if (conversations.length === 0) {
     return (
-      <p className="px-3 py-2 text-sm text-muted-foreground">
-        No recent conversations.
-      </p>
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-sm text-muted-foreground">
+            No direct messages yet.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-1">
-      {conversations.map((message) => (
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {conversations.map((conversation) => (
         <Link
-          key={message.id}
-          href={`/workspaces/${message.channel.workspace_id}/channels/${message.channel_id}`}
-          className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-surface-sunken"
+          key={conversation.id}
+          href={`/dms/${conversation.id}`}
         >
-          <Avatar className="size-9">
-            <AvatarFallback>
-              {initials(message.user.username)}
-            </AvatarFallback>
-          </Avatar>
+          <Card className="transition-colors hover:border-accent/50">
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent">
+                {conversation.participants
+                  .map((participant) => participant.user.username[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </div>
 
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm">
-              <span className="font-medium">
-                {message.user.username}
-              </span>{" "}
-              <span className="text-muted-foreground">
-                in #{message.channel.name}
-              </span>
-            </p>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {conversation.participants
+                    .map((participant) => participant.user.username)
+                    .join(", ")}
+                </p>
 
-            <p className="truncate text-xs text-muted-foreground">
-              {message.content}
-            </p>
-          </div>
-
-          <span className="shrink-0 text-xs text-muted-foreground">
-            {formatTimestamp(message.created_at)}
-          </span>
+                <p className="text-xs text-muted-foreground">
+                  Direct message
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </Link>
       ))}
     </div>
   );
 }
+  
 
-export function PinnedChannels() {
-  const {
-    data: pinned,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["dashboard", "pinned-channels"],
-    queryFn: dashboardApi.getPinnedChannels,
-  });
-
-  if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading...</p>;
-  }
-
-  if (error) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Unable to load pinned channels.
-      </p>
-    );
-  }
-
-  if (!pinned || pinned.length === 0) {
-    return (
-      <p className="px-3 py-2 text-xs text-muted-foreground">
-        Pin a channel to find it here quickly.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-1">
-      {pinned.map((channel) => (
-        <Link
-          key={channel.id}
-          href={`/workspaces/${channel.workspace_id}/channels/${channel.id}`}
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-sunken"
-        >
-          <Star className="size-3.5 text-warning" />
-          <Hash className="size-3.5 text-muted-foreground" />
-          {channel.name}
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-const ACTIVITY = [
-  { id: "a1", user: mockUsers[1], text: "created #design-review", time: "2h ago" },
-  { id: "a2", user: mockUsers[2], text: "joined Indie Hackers", time: "5h ago" },
-  { id: "a3", user: mockUsers[4], text: "pinned a message in #general", time: "1d ago" },
-];
-
-export function ActivityFeed() {
-  return (
-    <div className="space-y-3">
-      {ACTIVITY.map((item, i) => (
-        <div key={item.id} className="flex gap-3">
-          <div className="flex flex-col items-center">
-            <Avatar className="size-7">
-              <AvatarFallback className="text-[10px]">
-                {initials(item.user.name)}
-              </AvatarFallback>
-            </Avatar>
-            {i < ACTIVITY.length - 1 && (
-              <span className="mt-1 w-px flex-1 bg-border" />
-            )}
-          </div>
-          <div className={cn("pb-3", i === ACTIVITY.length - 1 && "pb-0")}>
-            <p className="text-sm">
-              <span className="font-medium">{item.user.name}</span>{" "}
-              <span className="text-muted-foreground">{item.text}</span>
-            </p>
-            <p className="text-xs text-muted-foreground">{item.time}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}

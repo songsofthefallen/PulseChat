@@ -11,19 +11,11 @@ import { useWebSocketContext } from "@/providers/websocket-provider";
 import type { DMMessage } from "@/types";
 
 export default function DMPage() {
-  // --------------------------------------------------
-  // Params / context
-  // --------------------------------------------------
-
   const params = useParams();
   const conversationId = Number(params.conversation_id);
 
   const queryClient = useQueryClient();
   const { subscribeDM } = useWebSocketContext();
-
-  // --------------------------------------------------
-  // Refs
-  // --------------------------------------------------
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const initialScrollDoneRef = useRef(false);
@@ -31,16 +23,8 @@ export default function DMPage() {
   const hasMoreOlderRef = useRef(true);
   const previousMessageCountRef = useRef(0);
   const shouldScrollToBottomRef = useRef(false);
-  // --------------------------------------------------
-  // Local state
-  // --------------------------------------------------
-
   const [content, setContent] = useState("");
   const [loadingOlder, setLoadingOlder] = useState(false);
-
-  // --------------------------------------------------
-  // Queries
-  // --------------------------------------------------
 
   const {
     data: conversation,
@@ -50,15 +34,7 @@ export default function DMPage() {
 
   const { data: messages = [] } = useDMMessages(conversationId);
 
-  // --------------------------------------------------
-  // Mutations
-  // --------------------------------------------------
-
   const sendMessage = useSendDMMessage(conversationId);
-
-  // --------------------------------------------------
-  // Event handlers
-  // --------------------------------------------------
 
   const handleSendMessage = () => {
     const trimmedContent = content.trim();
@@ -144,10 +120,6 @@ export default function DMPage() {
     }
   };
 
-  // --------------------------------------------------
-  // WebSocket
-  // --------------------------------------------------
-
   useEffect(() => {
     if (!conversationId) {
       return;
@@ -189,9 +161,6 @@ export default function DMPage() {
     });
   }, [conversationId, subscribeDM, queryClient]);
 
-  // --------------------------------------------------
-  // Reset pagination state when changing conversations
-  // --------------------------------------------------
 
   useEffect(() => {
     initialScrollDoneRef.current = false;
@@ -199,12 +168,6 @@ export default function DMPage() {
     hasMoreOlderRef.current = true;
   }, [conversationId]);
 
-  // --------------------------------------------------
-  // Message pagination / scrolling
-  // --------------------------------------------------
-
-  // Automatically load older messages when the first page
-  // does not fill the available message area.
   useEffect(() => {
     const container = messagesContainerRef.current;
 
@@ -222,9 +185,6 @@ export default function DMPage() {
       loadOlderMessages();
     }
   }, [messages, loadingOlder]);
-
-  // Restore the user's scroll position after older messages
-  // are inserted at the top.
   useEffect(() => {
     const container = messagesContainerRef.current;
 
@@ -300,9 +260,7 @@ export default function DMPage() {
     container.scrollTop = container.scrollHeight;
     shouldScrollToBottomRef.current = false;
     }, [messages]);
-  // Initial scroll to the newest message.
-  // If the first page does not overflow, wait for auto-fill
-  // pagination to finish first.
+
   useEffect(() => {
     const container = messagesContainerRef.current;
 
@@ -326,11 +284,6 @@ export default function DMPage() {
   }, [messages]);
 
 
-
-  // --------------------------------------------------
-  // Render guards
-  // --------------------------------------------------
-
   if (conversationLoading) {
     return <div>Loading conversation...</div>;
   }
@@ -344,14 +297,9 @@ export default function DMPage() {
     return <div>Conversation not found.</div>;
   }
 
-  // --------------------------------------------------
-  // UI
-  // --------------------------------------------------
-
   return (
     <div className="flex h-screen min-w-0 flex-1 flex-col bg-background">
 
-      {/* Conversation header */}
       <header className="flex h-14 shrink-0 items-center border-b border-border px-4">
         <Users className="mr-2 size-4 text-muted-foreground" />
 
@@ -368,7 +316,6 @@ export default function DMPage() {
         </div>
       </header>
 
-      {/* Messages */}
       <main
         ref={messagesContainerRef}
         onScroll={handleMessagesScroll}
@@ -433,7 +380,6 @@ export default function DMPage() {
         </div>
       </main>
 
-      {/* Message composer */}
       <footer className="shrink-0 border-t border-border px-6 py-4">
         <div className="mx-auto max-w-4xl">
           <div className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2">

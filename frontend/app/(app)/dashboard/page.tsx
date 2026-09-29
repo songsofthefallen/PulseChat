@@ -4,14 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { NotificationsPopover } from "@/features/notifications/notifications-popover";
-import {
-  ActivityFeed,
-  PinnedChannels,
-  RecentConversations,
-  WorkspaceList,
-} from "@/features/dashboard/dashboard-widgets";
+import { WorkspaceList, ConversationList } from "@/features/dashboard/dashboard-widgets";
 import { authApi } from "@/api/auth";
-import { NotificationList } from "@/features/notifications/notification-list";
+
 
 export default function DashboardPage() {
   const {
@@ -72,35 +67,12 @@ export default function DashboardPage() {
 
           <section>
             <h2 className="mb-3 text-lg font-semibold">
-              Recent Conversations
+              Direct Messages
             </h2>
 
-            <RecentConversations />
+            <ConversationList />
           </section>
 
-          <section>
-            <h2 className="mb-3 text-lg font-semibold">
-              Pinned Channels
-            </h2>
-
-            <PinnedChannels />
-          </section>
-
-          <section>
-            <h2 className="mb-3 text-lg font-semibold">
-              Activity
-            </h2>
-
-            <ActivityFeed />
-          </section>
-
-          <section>
-            <h2 className="mb-3 text-lg font-semibold">
-              Notifications
-            </h2>
-
-            <NotificationList />
-          </section>
         </div>
       </div>
     </div>

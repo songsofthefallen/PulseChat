@@ -5,6 +5,12 @@ import { dmsApi } from "@/api/dms";
 import type { DMMessage, DMConversation, } from "@/types";
 
 
+export function useListOfConversation() {
+  return useQuery<DMConversation[]>({
+    queryKey: ["list-of-conversation"],
+    queryFn: () => dmsApi.listOfConversations(),
+  })
+}
 
 export function useDMConversation(conversationId: number) {
   return useQuery<DMConversation>({
