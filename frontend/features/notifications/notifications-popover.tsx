@@ -21,6 +21,8 @@ import {
   getNotificationTitle,
   getNotificationBody,
 } from "@/features/notifications/notification-utils";
+import { useRouter } from "next/navigation";
+
 
 
 const ICONS: Record<NotificationItem["type"], React.ReactNode> = {
@@ -33,13 +35,48 @@ const ICONS: Record<NotificationItem["type"], React.ReactNode> = {
 };
 
 export function NotificationsPopover() {
-  const { data: notifications = [] } = useNotifications();
+  const {
+  data,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+} = useNotifications();
+
+const notifications = data?.pages.flat() ?? [];
   const { data: unreadData } = useUnreadNotificationCount();
 
   const markNotificationRead = useMarkNotificationRead();
   const markAllNotificationsRead = useMarkAllNotificationsRead();
 
   const unreadCount = unreadData?.count ?? 0;
+  const scrollContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
+
+  const handleNotificationClick = (notification: NotificationItem) => {
+    if (notification.conversation_id) {
+      router.push(`/dms/${notification.conversation_id}`);
+      return;   
+    }
+
+    if (notification.workspace_id && notification.channel_id) {
+      router.push(
+        `/workspaces/${notification.workspace_id}/channels/${notification.channel_id}`
+      );
+    }
+  };
+
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+  const element = event.currentTarget;
+
+  const nearBottom =
+    element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+
+    if (nearBottom && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+
 
   return (
     <Popover>
@@ -66,18 +103,25 @@ export function NotificationsPopover() {
             Mark all read
           </button>
         </div>
-        <div className="max-h-96 overflow-y-auto">
-          {notifications.length === 0 ? (
-            <EmptyState />
-          ) : (
-            notifications.map((n) => (
+          <div
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              className="max-h-96 overflow-y-auto"
+            >
+            {notifications.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <>
+                {notifications.map((n) => (
               <button
                 key={n.id}
-                  onClick={() => {
-                    if (!n.is_read) {
-                      markNotificationRead.mutate(n.id);
-                    }
-                  }}
+                onClick={() => {
+                  if (!n.is_read) {
+                    markNotificationRead.mutate(n.id);
+                  }
+
+                  handleNotificationClick(n);
+                }}
                 className={cn(
                   "flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left last:border-0 hover:bg-surface-sunken",
                   !n.is_read && "bg-accent-soft/40"
@@ -89,7 +133,7 @@ export function NotificationsPopover() {
                     {n.actor_username ?? getNotificationTitle(n.type)}
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">
-                    {n.message_content ?? getNotificationBody(n.type)}
+                    {getNotificationBody(n)}
                   </span>
                   <span className="mt-0.5 block text-[11px] text-muted-foreground">
                     {formatTimestamp(n.created_at)}
@@ -97,13 +141,15 @@ export function NotificationsPopover() {
                 </span>
                 {!n.is_read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-accent" />}
               </button>
-            ))
+            ))}
+            </>
           )}
         </div>
       </PopoverContent>
     </Popover>
   );
 }
+
 
 function EmptyState() {
   return (

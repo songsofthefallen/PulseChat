@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int =587
     PRESENCE_TTL: int = 60
     MESSAGES_PER_PAGE: int = 10
+    NOTIFICATION_PER_PAGE: int = 20
     ALLOWED_FILE_TYPES: set[str]= {
         "image/jpeg",
         "image/png",

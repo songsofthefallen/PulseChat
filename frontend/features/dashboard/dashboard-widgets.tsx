@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { dashboardApi } from "@/api/dashboard";
 import { dmsApi } from "@/api/dms";
+import { authApi } from "@/api/auth";
 
 export function WorkspaceList() {
   const {
@@ -62,6 +63,11 @@ export function ConversationList() {
     queryFn: dmsApi.listOfConversations,
   });
 
+  const { data: currentUser } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: authApi.me,
+  });
+
   if (isLoading) {
     return <p>Loading direct messages...</p>;
   }
@@ -93,6 +99,7 @@ export function ConversationList() {
             <CardContent className="flex items-center gap-3 p-4">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent">
                 {conversation.participants
+                  .filter((participant) => participant.user.id !== currentUser?.id)
                   .map((participant) => participant.user.username[0])
                   .join("")
                   .slice(0, 2)
@@ -102,6 +109,7 @@ export function ConversationList() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">
                   {conversation.participants
+                    .filter((participant) => participant.user.id !== currentUser?.id)
                     .map((participant) => participant.user.username)
                     .join(", ")}
                 </p>

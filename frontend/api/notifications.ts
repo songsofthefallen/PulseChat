@@ -2,8 +2,11 @@ import { apiClient } from "./client";
 import type { NotificationItem, NotificationUnreadCount } from "@/types";
 
 export const notificationsApi = {
-  list: async () => {
-    const response = await apiClient.get<NotificationItem[]>("/notifications");
+  list: async (beforeId?: number) => {
+    const response = await apiClient.get<NotificationItem[]>("/notifications", {
+      params: beforeId !== undefined ? { before_id: beforeId } : undefined,
+    });
+
     return response.data;
   },
 

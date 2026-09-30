@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models import Notification, User, DMMessage
+from models import Notification, User, DMMessage, Channel
 
 class NotificationRepository:
 
@@ -10,16 +10,24 @@ class NotificationRepository:
         return notification
 
     @staticmethod
-    def get_user_notifications(user_id: int, db: Session):
-        return (
-            db.query(Notification, User.username, DMMessage.content)
+    def get_user_notifications(before_id: int, limit: int, user_id: int, db: Session):
+        query = (db.query(
+                Notification,
+                User.username,
+                DMMessage.content,
+                Channel.name)
             .outerjoin(User, User.id == Notification.actor_id)
             .outerjoin(DMMessage, DMMessage.id == Notification.dm_message_id)
-            .filter(Notification.recipient_id == user_id)
-            .order_by(Notification.created_at.desc())
-            .all()
-        )
+            .outerjoin(Channel, Channel.id == Notification.channel_id)
+            .filter(Notification.recipient_id == user_id))
+
+
+        if before_id is not None:
+            query = query.filter(Notification.id < before_id)
+
+        return query.order_by(Notification.id.desc()).limit(limit).all()
         
+            
     @staticmethod
     def get_unread_notifications(user_id: int, db: Session):
         return db.query(Notification).filter(Notification.recipient_id == user_id,Notification.is_read == False).order_by(Notification.created_at.desc()).all()

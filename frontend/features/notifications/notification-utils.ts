@@ -1,3 +1,5 @@
+import { NotificationItem } from "@/types"
+
 export function getNotificationTitle(type: string) {
   switch (type) {
     case "message":
@@ -15,10 +17,16 @@ export function getNotificationTitle(type: string) {
   }
 }
 
-export function getNotificationBody(type: string) {
-  switch (type) {
-    case "message":
-      return "You received a new direct message.";
+export function getNotificationBody(notification: NotificationItem) {
+  if (notification.type === "message") {
+    if (notification.channel_name) {
+      return `New message in #${notification.channel_name}`;
+    }
+
+    return "You received a new direct message.";
+  }
+
+  switch (notification.type) {
     case "mention":
       return "Someone mentioned you.";
     case "reply":

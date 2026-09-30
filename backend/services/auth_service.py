@@ -85,7 +85,6 @@ class AuthService:
             db.refresh(save_user)
         except IntegrityError as e:
             db.rollback()
-            print("INTEGRITY ERROR:", e)
             raise
 
         return {

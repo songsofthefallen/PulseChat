@@ -9,9 +9,9 @@ from schemas import NotificationResponse
 router = APIRouter()
 
 @router.get("/notifications", response_model=list[NotificationResponse])
-def get_notifications(current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
+def get_notifications(before_id: int | None = None, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
 
-    return NotificationService.get_user_notifications(current_user.id, db)
+    return NotificationService.get_user_notifications(before_id, current_user.id, db)
 
 @router.get("/notifications/unread-count")
 def get_unread_count(current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):

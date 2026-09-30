@@ -40,7 +40,7 @@ class DMConversationRepository:
         return (
             db.query(DMConversation)
             .join(DMConversation.participants)
-            .filter(DMParticipant.user_id.in_(user_ids))
+            .filter(DMParticipant.user_id.in_(user_ids))        
             .group_by(DMConversation.id)
             .having(func.count(DMParticipant.user_id) == len(user_ids))
             .having(participant_count == len(user_ids))

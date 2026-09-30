@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from models import Notification
 from repository.notification_repository import NotificationRepository
 from schemas import NotificationType
+from config import settings
 
 class NotificationService:
 
@@ -14,8 +15,10 @@ class NotificationService:
         return NotificationRepository.create_notification(notification, db)
 
     @staticmethod
-    def get_user_notifications(user_id: int, db: Session):
-        notifications = NotificationRepository.get_user_notifications(user_id, db)
+    def get_user_notifications(before_id: int, user_id: int, db: Session):
+        limit = settings.NOTIFICATION_PER_PAGE
+
+        notifications = NotificationRepository.get_user_notifications(before_id, limit, user_id, db)
 
         return [
             {
@@ -25,6 +28,7 @@ class NotificationService:
                 "type": notification.type,
                 "workspace_id": notification.workspace_id,
                 "channel_id": notification.channel_id,
+                "channel_name": channel_name,
                 "conversation_id": notification.conversation_id,
                 "message_id": notification.message_id,
                 "dm_message_id": notification.dm_message_id,
@@ -33,7 +37,7 @@ class NotificationService:
                 "actor_username": username,
                 "message_content": content,
             }
-            for notification, username, content in notifications
+            for notification, username, content, channel_name in notifications
         ]
 
     @staticmethod
@@ -78,3 +82,17 @@ class NotificationService:
             dm_message_id=dm_message_id,
             db=db
         )
+
+    @staticmethod
+    def notify_channel_message(recipient_id: int, actor_id: int, workspace_id: int, channel_id: int, message_id: int, db: Session):
+        return NotificationService.create_notification(
+            recipient_id=recipient_id,
+            actor_id=actor_id,
+            notification_type=NotificationType.MESSAGE,
+            workspace_id=workspace_id,
+            channel_id=channel_id,
+            message_id=message_id,
+            db=db
+        )
+
+    

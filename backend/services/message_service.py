@@ -9,11 +9,12 @@ from config import settings
 import os
 import uuid
 from websocket.connection_manager import manager
+from services.notification_service import NotificationService
 
 
 class MessageService:
     @ staticmethod
-    async def send_message(workspace_id: int, channel_id: int, content: str, file: UploadFile | None, user_id: int, db: Session):
+    async def send_message(workspace_id: int, channel_id: int, content: str, file: UploadFile | None, current_user: int, db: Session):
         workspace = WorkspaceRepository.get_workspace(workspace_id, db)
 
         if workspace is None:
@@ -24,7 +25,7 @@ class MessageService:
         if channel is None:
             raise HTTPException(status_code=404, detail="Channel doesnt exist in this workspace")
 
-        member = WorkspaceRepository.get_workspace_member(workspace_id, user_id, db)
+        member = WorkspaceRepository.get_workspace_member(workspace_id, current_user.id, db)
 
         if member is None:
             raise HTTPException(status_code=403, detail="User is not a member of this workspace")
@@ -33,6 +34,10 @@ class MessageService:
 
         if send is None or not send.can_send:
             raise HTTPException(status_code=403, detail="User cannot send messages in this channel")
+
+        members = WorkspaceRepository.get_workspace_members(workspace_id, db)
+
+        recipients = [ member.user_id for member in members if member.user_id != current_user.id ]
         
         file_details = None
 
@@ -75,7 +80,7 @@ class MessageService:
                 file_name = file.filename
                 file_type = file.content_type
 
-            message = MessageRepository.create_message(channel_id, user_id, content, db)
+            message = MessageRepository.create_message(channel_id, current_user.id, content, db)
 
             if file:
                 MessageRepository.create_attachment(
@@ -86,6 +91,20 @@ class MessageService:
                     file_size=file_size,
                     db=db
                 )
+
+            notifications = []
+
+            for recipient_id in recipients:
+                notification = NotificationService.notify_channel_message(
+                    recipient_id=recipient_id,
+                    actor_id=current_user.id,
+                    workspace_id=workspace_id,
+                    channel_id=channel_id,
+                    message_id=message.id,
+                    db=db
+                )
+
+                notifications.append(notification)
 
             db.commit()
             db.refresh(message)
@@ -98,6 +117,20 @@ class MessageService:
 
             raise
 
+        for notification in notifications:
+            await manager.send_to_user(
+                notification.recipient_id,
+                {
+                    "type": "notification",
+                    "notification_type": notification.type,
+                    "notification_id": notification.id,
+                    "actor_id": notification.actor_id,
+                    "workspace_id": notification.workspace_id,
+                    "channel_id": notification.channel_id,
+                    "message_id": notification.message_id
+                }
+            )
+
         await manager.broadcast_to_room(
             channel_id,
             {
@@ -105,7 +138,10 @@ class MessageService:
                 "message_id": message.id,
                 "channel_id": message.channel_id,
                 "user_id": message.user_id,
-                "content": message.content
+                "username": current_user.username,
+                "content": message.content,
+                "created_at": message.created_at.isoformat(),
+                
             }
         )
 

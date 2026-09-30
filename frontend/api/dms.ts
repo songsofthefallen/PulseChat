@@ -12,7 +12,6 @@ export const dmsApi = {
       `/dms/${conversationId}`
     );
 
-    console.log(response.data)
     return response.data;
   },
 

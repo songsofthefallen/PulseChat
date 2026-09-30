@@ -99,6 +99,7 @@ export interface NotificationItem {
   type: "message" | "mention" | "reply" | "reaction" | "invite" | "system";
   workspace_id: number | null;
   channel_id: number | null;
+  channel_name: string | null;
   conversation_id: number | null;
   message_id: number | null;
   dm_message_id: number | null;

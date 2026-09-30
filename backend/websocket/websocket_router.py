@@ -48,7 +48,6 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
             if not handled:
                 await handle_dm_event(data, user, db)
 
-            print("WS RECEIVED FROM CLIENT:", data)
 
     except WebSocketDisconnect:
         was_active = manager.disconnect(user.id, websocket)

@@ -2,13 +2,28 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { notificationsApi } from "@/api/notifications";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  InfiniteData,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { NotificationItem } from "@/types"
 
 export function useNotifications() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["notifications"],
-    queryFn: () => notificationsApi.list(),
+    queryFn: ({ pageParam }) => notificationsApi.list(pageParam),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) => {
+        console.log("LAST PAGE:", lastPage.length);
+  console.log("NEXT CURSOR:", lastPage[lastPage.length - 1]?.id);
+      if (lastPage.length < 20) {
+        return undefined;
+      }
+
+      return lastPage[lastPage.length - 1].id;
+    },
   });
 }
 
@@ -26,15 +41,25 @@ export function useMarkNotificationRead() {
     mutationFn: (id: number) => notificationsApi.markRead(id),
 
     onSuccess: (updatedNotification) => {
-      queryClient.setQueryData<NotificationItem[]>(
-        ["notifications"],
-        (notifications) =>
-          notifications?.map((notification) =>
-            notification.id === updatedNotification.id
-              ? updatedNotification
-              : notification
-          )
-      );
+    queryClient.setQueryData<InfiniteData<NotificationItem[]>>(
+      ["notifications"],
+      (data) => {
+        if (!data) {
+          return data;
+        }
+
+        return {
+          ...data,
+          pages: data.pages.map((page) =>
+            page.map((notification) =>
+              notification.id === updatedNotification.id
+                ? updatedNotification
+                : notification
+            )
+          ),
+        };
+      }
+    );
 
       queryClient.invalidateQueries({
         queryKey: ["notifications", "unread-count"],

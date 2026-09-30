@@ -175,6 +175,7 @@ class NotificationResponse(BaseModel):
     type: NotificationType
     workspace_id: int | None = None
     channel_id: int | None = None
+    channel_name: str | None = None
     conversation_id: int | None = None
     message_id: int | None = None
     dm_message_id: int | None = None

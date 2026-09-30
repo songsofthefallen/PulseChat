@@ -13,7 +13,7 @@ router = APIRouter()
 @router.post("/workspaces/{workspace_id}/channels/{channel_id}/messages", response_model=MessageResponse)
 async def send_message( workspace_id: int, channel_id: int, content: str = Form(), file: UploadFile | None = File(None), current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
 
-    return await MessageService.send_message( workspace_id, channel_id, content, file, current_user.id, db)
+    return await MessageService.send_message( workspace_id, channel_id, content, file, current_user, db)
 
 @router.get("/workspaces/{workspace_id}/channels/{channel_id}/messages", response_model=list[MessageResponse])
 def get_messages(workspace_id: int, channel_id: int, before_id: int | None = None, current_user: User = Depends(AuthService.get_current_user), db: Session = Depends(get_db)):
