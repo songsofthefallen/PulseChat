@@ -64,3 +64,8 @@ class DMConversationRepository:
     @staticmethod
     def get_conversation_participants(conversation_id: int, db: Session):
         return db.query(DMParticipant).filter(DMParticipant.conversation_id == conversation_id).all()
+
+    @staticmethod
+    def search_conversations(name: str, user_id: int, db: Session):
+        return db.query(DMConversation).join(DMConversation.participants).filter(DMParticipant.user_id == user_id, DMConversation.name.ilike(f"%{name}%")
+        ).limit(10).all()

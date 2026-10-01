@@ -72,3 +72,16 @@ class WorkspaceRepository:
             WorkspaceMember.user_id == user_id,
             WorkspaceMember.role == "owner"
         ).first()
+    
+    @staticmethod
+    def search_workspaces(name: str, user_id: int, db: Session):
+        return (
+            db.query(Workspace)
+            .join(WorkspaceMember)
+            .filter(
+                WorkspaceMember.user_id == user_id,
+                Workspace.name.ilike(f"%{name}%")
+            )
+            .limit(10)
+            .all()
+        )

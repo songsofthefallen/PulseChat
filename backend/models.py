@@ -150,6 +150,7 @@ class DMConversation(Base):
     __tablename__ = "dm_conversations"
 
     id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=True)
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     participants = relationship( "DMParticipant",back_populates="conversation",cascade="all, delete-orphan")

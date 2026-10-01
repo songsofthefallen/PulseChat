@@ -31,6 +31,16 @@ class ChannelRepository:
     @staticmethod
     def is_channel_name_exist_for_update(workspace_id: int, channel_id: int, name: str, db: Session):
         return db.query(Channel).filter(Channel.workspace_id == workspace_id, Channel.name == name, Channel.id != channel_id).first()
+    
+    @staticmethod
+    def search_channels(name: str, user_id: int, db: Session):
+        return db.query(Channel).join(
+            WorkspaceMember,
+            WorkspaceMember.workspace_id == Channel.workspace_id,
+        ).filter(
+            WorkspaceMember.user_id == user_id,
+            Channel.name.ilike(f"%{name}%")
+        ).limit(10).all()
 
 
 
