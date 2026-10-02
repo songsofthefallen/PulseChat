@@ -146,8 +146,27 @@ export interface DMParticipant {
   };
 }
 
+export interface Workspace {
+  id: number;
+  name: string;
+}
+
+export interface Channel {
+  id: number;
+  name: string;
+  workspace_id: number;
+}
+
 export interface DMConversation {
   id: number;
+  name: string;
   created_at: string;
   participants: DMParticipant[];
+}
+
+export interface GlobalSearchResponse {
+  users: User[];
+  workspaces: Workspace[];
+  channels: Channel[];
+  conversations: DMConversation[];
 }

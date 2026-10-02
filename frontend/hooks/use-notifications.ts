@@ -16,8 +16,6 @@ export function useNotifications() {
     queryFn: ({ pageParam }) => notificationsApi.list(pageParam),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (lastPage) => {
-        console.log("LAST PAGE:", lastPage.length);
-  console.log("NEXT CURSOR:", lastPage[lastPage.length - 1]?.id);
       if (lastPage.length < 20) {
         return undefined;
       }

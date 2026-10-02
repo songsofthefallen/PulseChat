@@ -56,6 +56,13 @@ class WorkspaceResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class ChannelResponse(BaseModel):
+    id: int
+    workspace_id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 class MessageUserResponse(BaseModel):
     id: int
     username: str
@@ -145,6 +152,7 @@ class UpdateChannelPermissionRequest(BaseModel):
 
 class DMConversationResponse(BaseModel):
     id: int
+    name: str | None = None
     created_at: datetime
     participants: list[DMParticipantResponse]
 
@@ -194,3 +202,8 @@ class NotificationType(str, Enum):
     INVITE = "invite"
     SYSTEM = "system"
 
+class GlobalSearchResponse(BaseModel):
+    users: list[UserResponse] = Field(default_factory=list)
+    workspaces: list[WorkspaceResponse] = Field(default_factory=list)
+    channels: list[ChannelResponse] = Field(default_factory=list)
+    conversations: list[DMConversationResponse] = Field(default_factory=list)

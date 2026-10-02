@@ -153,9 +153,9 @@ class DMConversation(Base):
     name = Column(String(100), nullable=True)
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
-    participants = relationship( "DMParticipant",back_populates="conversation",cascade="all, delete-orphan")
+    participants = relationship("DMParticipant",back_populates="conversation",cascade="all, delete-orphan")
 
-    messages = relationship( "DMMessage",back_populates="conversation",cascade="all, delete-orphan")
+    messages = relationship("DMMessage",back_populates="conversation",cascade="all, delete-orphan")
 
 class DMParticipant(Base):
     __tablename__ = "dm_participants"
@@ -164,7 +164,7 @@ class DMParticipant(Base):
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"),primary_key=True)
 
-    conversation = relationship( "DMConversation",back_populates="participants")
+    conversation = relationship("DMConversation",back_populates="participants")
 
     user = relationship("User")
 

@@ -8,29 +8,42 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { mockChannels, mockUsers, mockMessages } from "@/constants/mock-data";
 import { cn } from "@/lib/utils";
+import { useGlobalSearch } from "@/hooks/use-search";
 
 export function SearchDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const [query, setQuery] = React.useState("");
+    open,
+    onOpenChange,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) {
+    console.log("SearchDialog rendered", open);
+   const [query, setQuery] = React.useState("");
+  const { data: searchResults, isLoading: isSearchLoading } =
+    useGlobalSearch(query);
 
-  const users = query
-    ? mockUsers.filter((u) => u.name.toLowerCase().includes(query.toLowerCase()))
-    : [];
-  const channels = query
-    ? mockChannels.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
-    : [];
-  const messages = query
-    ? mockMessages.filter((m) => m.content.toLowerCase().includes(query.toLowerCase()))
-    : [];
+    console.log("search results:", searchResults);
+        console.log("qu:", query);
 
-  const hasResults = users.length + channels.length + messages.length > 0;
+
+  const users = searchResults?.users ?? [];
+  const workspaces = searchResults?.workspaces ?? [];
+  const channels = searchResults?.channels ?? [];
+  const conversations = searchResults?.conversations ?? [];
+
+  const hasResults =
+    users.length +
+      workspaces.length +
+      channels.length +
+      conversations.length >
+    0;
+
+  React.useEffect(() => {
+    if (!open) {
+      setQuery("");
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -38,13 +51,15 @@ export function SearchDialog({
         <DialogTitle className="sr-only">Search PulseChat</DialogTitle>
         <div className="flex items-center gap-2 border-b border-border px-4 py-3">
           <Search className="size-4 text-muted-foreground" />
-          <Input
-            autoFocus
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search messages, channels, and people..."
-            className="h-auto border-0 p-0 shadow-none focus-visible:ring-0"
-          />
+<input
+  value={query}
+  onChange={(e) => {
+    console.log("PLAIN INPUT:", e.target.value);
+    setQuery(e.target.value);
+  }}
+  placeholder="TEST INPUT"
+  className="border p-2"
+/>
           <kbd className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">
             Esc
           </kbd>
@@ -56,34 +71,61 @@ export function SearchDialog({
               Start typing to search across your workspace.
             </p>
           )}
-          {query && !hasResults && (
+          {query && isSearchLoading && (
+            <p className="px-2 py-8 text-center text-sm text-muted-foreground">
+              Searching...
+            </p>
+          )}
+
+          {query && isSearchLoading && !hasResults && (
             <p className="px-2 py-8 text-center text-sm text-muted-foreground">
               No results for &ldquo;{query}&rdquo;.
             </p>
           )}
 
+          {workspaces.length > 0 && (
+            <ResultGroup label="Workspaces">
+              {workspaces.map((workspace) => (
+                <ResultRow
+                  key={workspace.id}
+                  icon={<Hash className="size-4" />}
+                  title={workspace.name}
+                />
+              ))}
+            </ResultGroup>
+          )}
+
           {channels.length > 0 && (
             <ResultGroup label="Channels">
-              {channels.map((c) => (
-                <ResultRow key={c.id} icon={<Hash className="size-4" />} title={`#${c.name}`} />
+              {channels.map((channel) => (
+                <ResultRow
+                  key={channel.id}
+                  icon={<Hash className="size-4" />}
+                  title={`#${channel.name}`}
+                />
               ))}
             </ResultGroup>
           )}
+
           {users.length > 0 && (
             <ResultGroup label="People">
-              {users.map((u) => (
-                <ResultRow key={u.id} icon={<UserIcon className="size-4" />} title={u.name} subtitle={`@${u.handle}`} />
+              {users.map((user) => (
+                <ResultRow
+                  key={user.id}
+                  icon={<UserIcon className="size-4" />}
+                  title={user.username}
+                />
               ))}
             </ResultGroup>
           )}
-          {messages.length > 0 && (
-            <ResultGroup label="Messages">
-              {messages.map((m) => (
+
+          {conversations.length > 0 && (
+            <ResultGroup label="Conversations">
+              {conversations.map((conversation) => (
                 <ResultRow
-                  key={m.id}
+                  key={conversation.id}
                   icon={<MessageSquare className="size-4" />}
-                  title={m.author.name}
-                  subtitle={m.content}
+                  title={conversation.name ?? `Conversation ${conversation.id}`}
                 />
               ))}
             </ResultGroup>

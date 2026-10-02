@@ -15,4 +15,12 @@ class SearchService:
 
         conversations = DMConversationRepository.search_conversations(content, user_id, db)
 
-        users = UserRepository.get_by_username(content, db)
+        users = UserRepository.search_users(content, db)
+
+        return {
+            "workspace": workspaces,
+            "channels": channels,
+            "conversations": conversations,
+            "users": users
+        }
+

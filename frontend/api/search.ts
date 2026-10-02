@@ -1,7 +1,12 @@
 import { apiClient } from "./client";
-import type { SearchResult } from "@/types";
+import type { GlobalSearchResponse } from "@/types";
 
 export const searchApi = {
-  global: (query: string) =>
-    apiClient.get<SearchResult[]>("/search", { params: { q: query } }),
+  search: async (query: string) => {
+    const response = await apiClient.get<GlobalSearchResponse>("/search", {
+      params: { q: query },
+    });
+
+    return response.data;
+  },
 };

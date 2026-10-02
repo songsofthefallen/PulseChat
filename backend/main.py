@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import auth, user, dashboard, workspace, channel, message, dm_conversation, dm_message, notification
+from routers import auth, user, dashboard, workspace, channel, message, dm_conversation, dm_message, notification, search
 from fastapi.middleware.cors import CORSMiddleware
 from websocket import websocket_router
 
@@ -25,4 +25,5 @@ app.include_router(dm_conversation.router)
 app.include_router(dm_message.router)
 app.include_router(websocket_router.router)
 app.include_router(notification.router)
+app.include_router(search.router)
 
